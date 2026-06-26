@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { useFetch } from "@/hooks/useFetch";
-import type { Provider } from "@/lib/types";
+import type { Provider, Zone } from "@/lib/types";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
@@ -24,7 +24,7 @@ export function Providers() {
         </Button>
       </div>
 
-      {showForm && <AddForm onSaved={() => { setShowForm(false); void refetch(); }} />}
+      {showForm && <AddForm onSaved={() => { setShowForm(false); void refetch(); }} onCancel={() => setShowForm(false)} />}
 
       {loading ? (
         <Spinner label="Loading providers" />
@@ -49,34 +49,107 @@ export function Providers() {
   );
 }
 
-function AddForm({ onSaved }: { onSaved: () => void }) {
+function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => void }) {
   const [name, setName] = useState("");
   const [apiKey, setApiKey] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [step, setStep] = useState<"input" | "select">("input");
+  const [zones, setZones] = useState<Zone[]>([]);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  async function submit(e: React.FormEvent) {
+  // Step 1: verify token + fetch zones (nothing persisted yet).
+  async function verifyAndFetchZones(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!name.trim() || !apiKey.trim()) {
+      setError("Name and API token are required");
+      return;
+    }
     setBusy(true);
     try {
-      await apiFetch("/api/providers", {
+      const result = await apiFetch<Zone[]>("/api/providers/verify", {
         method: "POST",
-        body: { type: "cloudflare", name, apiKey },
+        body: { type: "cloudflare", apiKey: apiKey.trim() },
       });
-      setName("");
-      setApiKey("");
-      onSaved();
+      setZones(Array.isArray(result) ? result : []);
+      setSelected(new Set());
+      setStep("select");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to add provider");
+      setError(e instanceof Error ? e.message : "Token verification failed");
     } finally {
       setBusy(false);
     }
   }
 
+  function toggleZone(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  // Step 2: persist the provider with the selected zones in one shot.
+  async function save() {
+    setError(null);
+    setBusy(true);
+    try {
+      await apiFetch("/api/providers", {
+        method: "POST",
+        body: {
+          type: "cloudflare",
+          name: name.trim(),
+          apiKey: apiKey.trim(),
+          selectedZones: [...selected],
+        },
+      });
+      onSaved();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to save provider");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (step === "select") {
+    return (
+      <Card title="Select zones" description="Pick which domains to manage. Leave all unchecked to manage every accessible zone.">
+        {zones.length === 0 ? (
+          <p className="text-sm text-slate-500">No zones accessible with this token.</p>
+        ) : (
+          <ul className="max-h-72 space-y-1 overflow-y-auto">
+            {zones.map((z) => (
+              <li key={z.id}>
+                <label className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-slate-50">
+                  <input
+                    type="checkbox"
+                    checked={selected.has(z.id)}
+                    onChange={() => toggleZone(z.id)}
+                    className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                  />
+                  <span className="font-mono text-sm text-slate-900">{z.name}</span>
+                  <span className="ml-auto text-xs text-slate-400">{z.status}</span>
+                </label>
+              </li>
+            ))}
+          </ul>
+        )}
+        {error && <p className="mt-3 text-xs text-red-600">{error}</p>}
+        <div className="mt-4 flex justify-end gap-2">
+          <Button variant="secondary" onClick={() => { setStep("input"); setError(null); }} disabled={busy}>Back</Button>
+          <Button onClick={save} loading={busy}>
+            {selected.size === 0 ? "Save (all zones)" : `Save (${selected.size} zone${selected.size > 1 ? "s" : ""})`}
+          </Button>
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <Card title="Add Cloudflare provider">
-      <form onSubmit={submit} className="flex flex-col gap-4">
+      <form onSubmit={verifyAndFetchZones} className="flex flex-col gap-4">
         <Input
           label="Display name"
           name="name"
@@ -94,11 +167,12 @@ function AddForm({ onSaved }: { onSaved: () => void }) {
           onChange={(e) => setApiKey(e.target.value)}
           placeholder="Cloudflare API token"
           required
-          hint="We verify the token against Cloudflare before saving it."
+          hint="We verify the token against Cloudflare, then let you pick zones."
           error={error}
         />
-        <div className="flex justify-end">
-          <Button type="submit" loading={busy}>Add</Button>
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="secondary" onClick={onCancel} disabled={busy}>Cancel</Button>
+          <Button type="submit" loading={busy}>Verify & continue</Button>
         </div>
       </form>
     </Card>
@@ -115,6 +189,7 @@ function ProviderRow({ provider, onChanged }: { provider: Provider; onChanged: (
     setError(null);
     try {
       await apiFetch(`/api/providers/${provider.id}/zones`, { allow401: true });
+      setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Connection test failed");
     } finally {
@@ -136,6 +211,8 @@ function ProviderRow({ provider, onChanged }: { provider: Provider; onChanged: (
     }
   }
 
+  const zoneCount = provider.selectedZones.length;
+
   return (
     <li>
       <Card>
@@ -151,6 +228,10 @@ function ProviderRow({ provider, onChanged }: { provider: Provider; onChanged: (
               <div>
                 <dt className="inline">Token:</dt>{" "}
                 <dd className="inline font-mono text-slate-700">{provider.apiKey}</dd>
+              </div>
+              <div>
+                <dt className="inline">Zones:</dt>{" "}
+                <dd className="inline text-slate-700">{zoneCount === 0 ? "all" : zoneCount}</dd>
               </div>
               <div>
                 <dt className="inline">Added:</dt>{" "}

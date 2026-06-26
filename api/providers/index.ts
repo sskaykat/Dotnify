@@ -7,6 +7,12 @@ import type { ApiResponse, Provider } from "../_lib/types";
 import type { AuthedRequest } from "../_lib/middleware";
 import { getBody } from "../_lib/http";
 
+interface CfZone {
+  id: string;
+  name: string;
+  status: string;
+}
+
 /**
  * GET /api/providers
  * List all configured providers. API keys are masked before being sent to the
@@ -21,16 +27,25 @@ async function list(_req: AuthedRequest, res: ApiResponse) {
 
 /**
  * POST /api/providers
- * Add a new provider. For Cloudflare we immediately verify the token by
- * hitting GET /user/tokens/verify; if it fails we reject the request.
+ * Add a new provider. Verifies the Cloudflare token, then fetches the zone
+ * list so the caller can pick which zones to manage.
  *
- * Body: { type: "cloudflare", name, apiKey }
+ * Body: { type: "cloudflare", name, apiKey, selectedZones?: string[] }
+ *
+ * If `selectedZones` is omitted or empty, all accessible zones are managed.
+ * If provided, each id is validated against the token's accessible zones.
  */
 async function create(req: AuthedRequest, res: ApiResponse) {
-  const body = getBody(req) as { type?: string; name?: string; apiKey?: string };
+  const body = getBody(req) as {
+    type?: string;
+    name?: string;
+    apiKey?: string;
+    selectedZones?: string[];
+  };
   const type = body.type;
   const name = body.name?.trim();
   const apiKey = body.apiKey?.trim();
+  const selectedZones = Array.isArray(body.selectedZones) ? body.selectedZones : [];
 
   if (type !== "cloudflare") {
     return error(res, "Only 'cloudflare' provider type is supported in this MVP");
@@ -45,12 +60,28 @@ async function create(req: AuthedRequest, res: ApiResponse) {
     return error(res, `Cloudflare token verification failed: ${e instanceof Error ? e.message : "unknown error"}`, 422);
   }
 
+  // Validate selectedZones against the token's accessible zones (if any were picked).
+  if (selectedZones.length > 0) {
+    let accessible: CfZone[] = [];
+    try {
+      accessible = await cfFetch<CfZone[]>(apiKey, "/zones", { query: { per_page: 50 } });
+    } catch (e) {
+      return error(res, `Failed to fetch zones for validation: ${e instanceof Error ? e.message : "unknown error"}`, 502);
+    }
+    const validIds = new Set(accessible.map((z) => z.id));
+    const invalid = selectedZones.filter((id) => !validIds.has(id));
+    if (invalid.length > 0) {
+      return error(res, `Some selected zones are not accessible with this token: ${invalid.join(", ")}`, 422);
+    }
+  }
+
   const provider: Provider = {
     id: randomBytes(8).toString("hex"),
     type: "cloudflare",
     name,
     apiKey,
     createdAt: new Date().toISOString(),
+    selectedZones,
   };
 
   const existing = (await redis.get<Provider[]>(KEYS.providers)) ?? [];
@@ -64,7 +95,7 @@ async function create(req: AuthedRequest, res: ApiResponse) {
 function maskKey(p: Provider): Provider {
   const k = p.apiKey;
   const masked = k.length <= 4 ? "****" : `${"*".repeat(Math.min(8, k.length - 4))}${k.slice(-4)}`;
-  return { ...p, apiKey: masked };
+  return { ...p, apiKey: masked, selectedZones: Array.isArray(p.selectedZones) ? p.selectedZones : [] };
 }
 
 export default requireAuth(async (req, res) => {

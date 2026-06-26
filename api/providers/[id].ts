@@ -28,7 +28,7 @@ function maskKey(p: Provider): Provider {
  */
 async function update(req: AuthedRequest, res: ApiResponse) {
   const id = queryStr(req, "id");
-  const body = getBody(req) as { name?: string; apiKey?: string };
+  const body = getBody(req) as { name?: string; apiKey?: string; selectedZones?: string[] };
 
   const list = await loadProviders();
   const idx = list.findIndex((p) => p.id === id);
@@ -47,6 +47,10 @@ async function update(req: AuthedRequest, res: ApiResponse) {
       return error(res, `Cloudflare token verification failed: ${e instanceof Error ? e.message : "unknown error"}`, 422);
     }
     provider.apiKey = newKey;
+  }
+
+  if (Array.isArray(body.selectedZones)) {
+    provider.selectedZones = body.selectedZones;
   }
 
   list[idx] = provider;

@@ -6,18 +6,41 @@ import type { DnsRecord, RecordType } from "@/lib/types";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
+import { Toggle } from "@/components/Toggle";
 import { Spinner } from "@/components/Spinner";
 import { EmptyState } from "@/components/EmptyState";
 
-const RECORD_TYPES: RecordType[] = ["A", "AAAA", "CNAME", "TXT", "MX", "NS", "SRV", "CAA", "PTR", "SOA", "SPF", "URI"];
+const RECORD_TYPES: RecordType[] = [
+  "A",
+  "AAAA",
+  "CNAME",
+  "TXT",
+  "MX",
+  "NS",
+  "SRV",
+  "CAA",
+  "PTR",
+  "SOA",
+  "SPF",
+  "URI",
+];
+const TYPES_WITH_PRIORITY: ReadonlySet<RecordType> = new Set(["MX", "SRV"]);
 
 export function Records() {
   const { zoneId } = useParams<{ zoneId: string }>();
   const [search] = useSearchParams();
   const providerId = search.get("providerId");
 
-  const path = zoneId && providerId ? `/api/zones/${zoneId}/records?providerId=${providerId}` : null;
-  const { data: records, loading, error, refetch } = useFetch<DnsRecord[]>(path);
+  const path =
+    zoneId && providerId
+      ? `/api/zones/${zoneId}/records?providerId=${providerId}`
+      : null;
+  const {
+    data: records,
+    loading,
+    error,
+    refetch,
+  } = useFetch<DnsRecord[]>(path);
 
   const [editing, setEditing] = useState<DnsRecord | null>(null);
   const [creating, setCreating] = useState(false);
@@ -25,7 +48,10 @@ export function Records() {
   if (!zoneId || !providerId) {
     return (
       <div className="mx-auto max-w-5xl">
-        <EmptyState title="Missing parameters" description="Open this page from the Zones list." />
+        <EmptyState
+          title="Missing parameters"
+          description="Open this page from the Zones list."
+        />
       </div>
     );
   }
@@ -34,13 +60,23 @@ export function Records() {
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <Link to="/zones" className="text-sm text-brand-600 hover:underline">← Back to zones</Link>
-          <h1 className="mt-1 text-xl font-semibold text-slate-900">DNS records</h1>
+          <Link to="/zones" className="text-sm text-brand-600 hover:underline">
+            ← Back to zones
+          </Link>
+          <h1 className="mt-1 text-xl font-semibold text-slate-900">
+            DNS records
+          </h1>
           <p className="mt-0.5 text-sm text-slate-500">
             Zone <span className="font-mono text-slate-700">{zoneId}</span>
           </p>
         </div>
-        <Button onClick={() => { setEditing(null); setCreating((v) => !v); }} variant={creating ? "secondary" : "primary"}>
+        <Button
+          onClick={() => {
+            setEditing(null);
+            setCreating((v) => !v);
+          }}
+          variant={creating ? "secondary" : "primary"}
+        >
           {creating ? "Cancel" : "Add record"}
         </Button>
       </div>
@@ -49,7 +85,10 @@ export function Records() {
         <RecordForm
           zoneId={zoneId}
           providerId={providerId}
-          onDone={() => { setCreating(false); void refetch(); }}
+          onDone={() => {
+            setCreating(false);
+            void refetch();
+          }}
         />
       )}
 
@@ -58,7 +97,10 @@ export function Records() {
           zoneId={zoneId}
           providerId={providerId}
           record={editing}
-          onDone={() => { setEditing(null); void refetch(); }}
+          onDone={() => {
+            setEditing(null);
+            void refetch();
+          }}
         />
       )}
 
@@ -67,10 +109,19 @@ export function Records() {
       ) : error ? (
         <Card>
           <p className="text-sm text-red-600">{error}</p>
-          <Button variant="secondary" className="mt-3" onClick={() => void refetch()}>Retry</Button>
+          <Button
+            variant="secondary"
+            className="mt-3"
+            onClick={() => void refetch()}
+          >
+            Retry
+          </Button>
         </Card>
       ) : !records || records.length === 0 ? (
-        <EmptyState title="No records" description="This zone has no DNS records yet." />
+        <EmptyState
+          title="No records"
+          description="This zone has no DNS records yet."
+        />
       ) : (
         <Card className="overflow-hidden p-0">
           <div className="overflow-x-auto">
@@ -87,30 +138,41 @@ export function Records() {
               </thead>
               <tbody>
                 {records.map((r) => (
-                  <tr key={r.id} className="border-b border-slate-100 last:border-b-0 align-top">
+                  <tr
+                    key={r.id}
+                    className="border-b border-slate-100 last:border-b-0 align-top"
+                  >
                     <td className="px-4 py-2">
-                      <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-700">{r.type}</span>
+                      <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-700">
+                        {r.type}
+                      </span>
                     </td>
-                    <td className="px-4 py-2 font-mono text-slate-900">{r.name}</td>
+                    <td className="px-4 py-2 font-mono text-slate-900">
+                      {r.name}
+                    </td>
                     <td className="px-4 py-2 font-mono text-slate-700 break-all">
                       {r.content}
                       {r.priority !== undefined && r.priority !== null && (
-                        <span className="ml-1 text-xs text-slate-400">(pri {r.priority})</span>
+                        <span className="ml-1 text-xs text-slate-400">
+                          (pri {r.priority})
+                        </span>
                       )}
                     </td>
-                    <td className="px-4 py-2 text-slate-600">{r.ttl === 1 ? "Auto" : r.ttl}</td>
-                    <td className="px-4 py-2 text-slate-600">{r.proxied ? "Yes" : "No"}</td>
+                    <td className="px-4 py-2 text-slate-600">
+                      {r.ttl === 1 ? "Auto" : r.ttl}
+                    </td>
+                    <td className="px-4 py-2 text-slate-600">
+                      {r.proxied ? "Yes" : "No"}
+                    </td>
                     <td className="px-4 py-2 text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" className="px-2 py-1 text-xs" onClick={() => setEditing(r)}>
+                      <div className="flex justify-end">
+                        <Button
+                          variant="secondary"
+                          className="px-2 py-1 text-xs"
+                          onClick={() => setEditing(r)}
+                        >
                           Edit
                         </Button>
-                        <DeleteButton
-                          zoneId={zoneId}
-                          providerId={providerId}
-                          recordId={r.id}
-                          onDone={() => void refetch()}
-                        />
                       </div>
                     </td>
                   </tr>
@@ -142,10 +204,14 @@ function RecordForm({
   const [ttl, setTtl] = useState<number>(record?.ttl ?? 1);
   const [proxied, setProxied] = useState<boolean>(record?.proxied ?? false);
   const [priority, setPriority] = useState<string>(
-    record?.priority !== undefined && record?.priority !== null ? String(record.priority) : ""
+    record?.priority !== undefined && record?.priority !== null
+      ? String(record.priority)
+      : "",
   );
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const showPriority = TYPES_WITH_PRIORITY.has(type);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -158,10 +224,13 @@ function RecordForm({
     const base = `/api/zones/${zoneId}/records`;
     const query = `?providerId=${providerId}`;
     const body: Record<string, unknown> = { type, name, content, ttl, proxied };
-    if (priority !== "") body.priority = Number(priority);
+    if (showPriority && priority !== "") body.priority = Number(priority);
     try {
       if (isEdit && record) {
-        await apiFetch(`${base}/${record.id}${query}`, { method: "PATCH", body });
+        await apiFetch(`${base}/${record.id}${query}`, {
+          method: "PATCH",
+          body,
+        });
       } else {
         await apiFetch(`${base}${query}`, { method: "POST", body });
       }
@@ -184,19 +253,35 @@ function RecordForm({
             className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
           >
             {RECORD_TYPES.map((t) => (
-              <option key={t} value={t}>{t}</option>
+              <option key={t} value={t}>
+                {t}
+              </option>
             ))}
           </select>
         </div>
-        <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} placeholder="@ or subdomain" required />
-        <Input label="Content" value={content} onChange={(e) => setContent(e.target.value)} placeholder="e.g. 192.0.2.1" required />
         <Input
-          label="Priority"
-          type="number"
-          value={priority}
-          onChange={(e) => setPriority(e.target.value)}
-          hint="MX / SRV only. Leave blank otherwise."
+          label="Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="@ or subdomain"
+          required
         />
+        <Input
+          label="Content"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="e.g. 192.0.2.1"
+          required
+        />
+        {showPriority && (
+          <Input
+            label="Priority"
+            type="number"
+            value={priority}
+            onChange={(e) => setPriority(e.target.value)}
+            hint="Required for MX / SRV records."
+          />
+        )}
         <Input
           label="TTL (seconds)"
           type="number"
@@ -204,14 +289,34 @@ function RecordForm({
           onChange={(e) => setTtl(Number(e.target.value))}
           hint="Use 1 for Auto."
         />
-        <label className="flex items-center gap-2 self-end pb-2 text-sm text-slate-700">
-          <input type="checkbox" checked={proxied} onChange={(e) => setProxied(e.target.checked)} className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" />
-          Proxied (Cloudflare orange-cloud)
-        </label>
+        <div className="self-end pb-2">
+          <Toggle
+            checked={proxied}
+            onChange={setProxied}
+            label="Proxied"
+            hint="Cloudflare orange-cloud"
+          />
+        </div>
         {error && <p className="text-xs text-red-600 md:col-span-2">{error}</p>}
-        <div className="flex justify-end gap-2 md:col-span-2">
-          <Button type="button" variant="secondary" onClick={onDone}>Cancel</Button>
-          <Button type="submit" loading={busy}>{isEdit ? "Save" : "Create"}</Button>
+        <div className="flex items-center justify-between gap-2 md:col-span-2">
+          <div>
+            {isEdit && record && (
+              <DeleteButton
+                zoneId={zoneId}
+                providerId={providerId}
+                recordId={record.id}
+                onDone={onDone}
+              />
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Button type="button" variant="secondary" onClick={onDone}>
+              Cancel
+            </Button>
+            <Button type="submit" loading={busy}>
+              {isEdit ? "Save" : "Create"}
+            </Button>
+          </div>
         </div>
       </form>
     </Card>
@@ -237,7 +342,10 @@ function DeleteButton({
     setBusy(true);
     setError(null);
     try {
-      await apiFetch(`/api/zones/${zoneId}/records/${recordId}?providerId=${providerId}`, { method: "DELETE" });
+      await apiFetch(
+        `/api/zones/${zoneId}/records/${recordId}?providerId=${providerId}`,
+        { method: "DELETE" },
+      );
       onDone();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to delete");
@@ -250,19 +358,23 @@ function DeleteButton({
   if (confirming) {
     return (
       <span className="inline-flex items-center gap-1">
-        <Button variant="danger" className="px-2 py-1 text-xs" onClick={remove} loading={busy}>Confirm</Button>
-        <Button variant="ghost" className="px-2 py-1 text-xs" onClick={() => setConfirming(false)} disabled={busy}>Cancel</Button>
+        <Button variant="danger" onClick={remove} loading={busy}>
+          Confirm
+        </Button>
+        <Button
+          variant="secondary"
+          onClick={() => setConfirming(false)}
+          disabled={busy}
+        >
+          Cancel
+        </Button>
         {error && <span className="text-xs text-red-600">{error}</span>}
       </span>
     );
   }
 
   return (
-    <Button
-      variant="ghost"
-      className="px-2 py-1 text-xs text-red-600 hover:bg-red-50"
-      onClick={() => setConfirming(true)}
-    >
+    <Button variant="danger" onClick={() => setConfirming(true)}>
       Delete
     </Button>
   );

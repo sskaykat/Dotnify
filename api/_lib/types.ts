@@ -34,6 +34,8 @@ export interface Provider {
   name: string;
   apiKey: string; // plaintext (MVP)
   createdAt: string; // ISO timestamp
+  /** Zone ids the user chose to manage (empty = all accessible zones). */
+  selectedZones: string[];
 }
 
 export interface Zone {
