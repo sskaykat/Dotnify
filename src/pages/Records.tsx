@@ -312,7 +312,7 @@ export function Records() {
                       <div className="flex justify-end">
                         <Button
                           variant="secondary"
-                          className="px-2 py-0.5 text-xs leading-4"
+                          className="px-2 py-[0.2rem] text-xs leading-none"
                           onClick={() => setEditing(r)}
                         >
                           Edit
