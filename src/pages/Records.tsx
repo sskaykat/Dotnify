@@ -7,7 +7,7 @@ import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { Toggle } from "@/components/Toggle";
-import { Spinner } from "@/components/Spinner";
+import { SkeletonRow } from "@/components/Skeleton";
 import { EmptyState } from "@/components/EmptyState";
 
 const RECORD_TYPES: RecordType[] = [
@@ -39,6 +39,7 @@ export function Records() {
     data: records,
     loading,
     error,
+    isValidating,
     refetch,
   } = useFetch<DnsRecord[]>(path);
 
@@ -70,15 +71,23 @@ export function Records() {
             Zone <span className="font-mono text-slate-700">{zoneId}</span>
           </p>
         </div>
-        <Button
-          onClick={() => {
-            setEditing(null);
-            setCreating((v) => !v);
-          }}
-          variant={creating ? "secondary" : "primary"}
-        >
-          {creating ? "Cancel" : "Add record"}
-        </Button>
+        <div className="flex items-center gap-3">
+          {isValidating && !loading && (
+            <span className="flex items-center gap-1.5 text-xs text-slate-400">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-500" />
+              Updating
+            </span>
+          )}
+          <Button
+            onClick={() => {
+              setEditing(null);
+              setCreating((v) => !v);
+            }}
+            variant={creating ? "secondary" : "primary"}
+          >
+            {creating ? "Cancel" : "Add record"}
+          </Button>
+        </div>
       </div>
 
       {creating && (
@@ -105,7 +114,27 @@ export function Records() {
       )}
 
       {loading ? (
-        <Spinner label="Loading records" />
+        <Card className="overflow-hidden p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase text-slate-500">
+                  <th className="px-4 py-2 font-medium">Type</th>
+                  <th className="px-4 py-2 font-medium">Name</th>
+                  <th className="px-4 py-2 font-medium">Content</th>
+                  <th className="px-4 py-2 font-medium">TTL</th>
+                  <th className="px-4 py-2 font-medium">Proxied</th>
+                  <th className="px-4 py-2 text-right font-medium">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <SkeletonRow key={i} cols={6} />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
       ) : error ? (
         <Card>
           <p className="text-sm text-red-600">{error}</p>
@@ -164,11 +193,11 @@ export function Records() {
                     <td className="px-4 py-2 text-slate-600">
                       {r.proxied ? "Yes" : "No"}
                     </td>
-                    <td className="px-4 py-2 text-right">
+                    <td className="px-4 py-2 text-right align-middle">
                       <div className="flex justify-end">
                         <Button
                           variant="secondary"
-                          className="px-2 py-1 text-xs"
+                          className="px-2 py-0.5 text-xs leading-4"
                           onClick={() => setEditing(r)}
                         >
                           Edit
