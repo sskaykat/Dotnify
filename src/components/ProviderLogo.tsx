@@ -2,6 +2,7 @@ import type { ProviderType } from "@/lib/types";
 
 const LOGOS: Record<ProviderType, { bg: string; text: string; label: string }> = {
   cloudflare: { bg: "bg-orange-500", text: "CF", label: "Cloudflare" },
+  huawei: { bg: "bg-red-600", text: "HW", label: "Huawei Cloud" },
 };
 
 export function ProviderLogo({ type, size = "sm" }: { type: ProviderType; size?: "sm" | "md" }) {

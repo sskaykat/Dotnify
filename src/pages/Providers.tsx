@@ -1,12 +1,24 @@
 import { useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { useFetch } from "@/hooks/useFetch";
-import type { Provider, Zone } from "@/lib/types";
+import type { Provider, ProviderType, Zone } from "@/lib/types";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { Spinner } from "@/components/Spinner";
 import { EmptyState } from "@/components/EmptyState";
+
+const HW_REGIONS = [
+  { value: "cn-north-1", label: "华北-北京一" },
+  { value: "cn-north-4", label: "华北-北京四" },
+  { value: "cn-east-2", label: "华东-上海二" },
+  { value: "cn-east-3", label: "华东-上海一" },
+  { value: "cn-south-1", label: "华南-广州" },
+  { value: "cn-southwest-2", label: "西南-贵阳一" },
+  { value: "ap-southeast-1", label: "中国-香港" },
+  { value: "ap-southeast-2", label: "亚太-曼谷" },
+  { value: "ap-southeast-3", label: "亚太-新加坡" },
+];
 
 export function Providers() {
   const { data: providers, loading, error, refetch } = useFetch<Provider[]>("/api/providers");
@@ -17,7 +29,7 @@ export function Providers() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-slate-900">DNS Providers</h1>
-          <p className="mt-0.5 text-sm text-slate-500">Manage the API tokens used to access your DNS zones.</p>
+          <p className="mt-0.5 text-sm text-slate-500">Manage the API credentials used to access your DNS zones.</p>
         </div>
         <Button onClick={() => setShowForm((v) => !v)} variant={showForm ? "secondary" : "primary"}>
           {showForm ? "Cancel" : "Add provider"}
@@ -35,7 +47,7 @@ export function Providers() {
       ) : !providers || providers.length === 0 ? (
         <EmptyState
           title="No providers yet"
-          description="Add a Cloudflare API token to start managing its DNS records."
+          description="Add a DNS provider to start managing its DNS records."
           action={<Button onClick={() => setShowForm(true)}>Add your first provider</Button>}
         />
       ) : (
@@ -50,33 +62,56 @@ export function Providers() {
 }
 
 function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => void }) {
+  const [providerType, setProviderType] = useState<ProviderType>("cloudflare");
   const [name, setName] = useState("");
   const [apiKey, setApiKey] = useState("");
+  const [apiAccessKey, setApiAccessKey] = useState("");
+  const [apiSecretKey, setApiSecretKey] = useState("");
+  const [region, setRegion] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [step, setStep] = useState<"input" | "select">("input");
   const [zones, setZones] = useState<Zone[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  // Step 1: verify token + fetch zones (nothing persisted yet).
+  // Step 1: verify credentials + fetch zones (nothing persisted yet).
   async function verifyAndFetchZones(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!name.trim() || !apiKey.trim()) {
-      setError("Name and API token are required");
+    if (!name.trim()) {
+      setError("Name is required");
       return;
     }
+    if (providerType === "cloudflare" && !apiKey.trim()) {
+      setError("API token is required");
+      return;
+    }
+    if (providerType === "huawei") {
+      if (!apiAccessKey.trim() || !apiSecretKey.trim()) {
+        setError("Access Key ID and Secret Access Key are required");
+        return;
+      }
+    }
+
     setBusy(true);
     try {
+      const body: Record<string, unknown> = { type: providerType };
+      if (providerType === "cloudflare") {
+        body.apiKey = apiKey.trim();
+      } else {
+        body.apiAccessKey = apiAccessKey.trim();
+        body.apiSecretKey = apiSecretKey.trim();
+        if (region) body.region = region;
+      }
       const result = await apiFetch<Zone[]>("/api/providers/verify", {
         method: "POST",
-        body: { type: "cloudflare", apiKey: apiKey.trim() },
+        body,
       });
       setZones(Array.isArray(result) ? result : []);
       setSelected(new Set());
       setStep("select");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Token verification failed");
+      setError(e instanceof Error ? e.message : "Verification failed");
     } finally {
       setBusy(false);
     }
@@ -96,14 +131,21 @@ function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => v
     setError(null);
     setBusy(true);
     try {
+      const body: Record<string, unknown> = {
+        type: providerType,
+        name: name.trim(),
+        selectedZones: [...selected],
+      };
+      if (providerType === "cloudflare") {
+        body.apiKey = apiKey.trim();
+      } else {
+        body.apiAccessKey = apiAccessKey.trim();
+        body.apiSecretKey = apiSecretKey.trim();
+        if (region) body.region = region;
+      }
       await apiFetch("/api/providers", {
         method: "POST",
-        body: {
-          type: "cloudflare",
-          name: name.trim(),
-          apiKey: apiKey.trim(),
-          selectedZones: [...selected],
-        },
+        body,
       });
       onSaved();
     } catch (e) {
@@ -117,7 +159,7 @@ function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => v
     return (
       <Card title="Select zones" description="Pick which domains to manage. Leave all unchecked to manage every accessible zone.">
         {zones.length === 0 ? (
-          <p className="text-sm text-slate-500">No zones accessible with this token.</p>
+          <p className="text-sm text-slate-500">No zones accessible with these credentials.</p>
         ) : (
           <ul className="max-h-72 space-y-1 overflow-y-auto">
             {zones.map((z) => (
@@ -148,28 +190,89 @@ function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => v
   }
 
   return (
-    <Card title="Add Cloudflare provider">
+    <Card title={providerType === "huawei" ? "Add Huawei Cloud provider" : "Add Cloudflare provider"}>
       <form onSubmit={verifyAndFetchZones} className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium text-slate-700">Provider type</label>
+          <div className="flex gap-2">
+            {(["cloudflare", "huawei"] as ProviderType[]).map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setProviderType(t)}
+                className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+                  providerType === t
+                    ? "border-brand-500 bg-brand-50 text-brand-700"
+                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                }`}
+              >
+                {t === "cloudflare" ? "Cloudflare" : "Huawei Cloud"}
+              </button>
+            ))}
+          </div>
+        </div>
         <Input
           label="Display name"
           name="name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="My Cloudflare account"
+          placeholder={providerType === "cloudflare" ? "My Cloudflare account" : "My Huawei Cloud account"}
           required
           hint="A label so you can tell providers apart later."
         />
-        <Input
-          label="API token"
-          name="apiKey"
-          type="password"
-          value={apiKey}
-          onChange={(e) => setApiKey(e.target.value)}
-          placeholder="Cloudflare API token"
-          required
-          hint="We verify the token against Cloudflare, then let you pick zones."
-          error={error}
-        />
+        {providerType === "cloudflare" ? (
+          <Input
+            label="API token"
+            name="apiKey"
+            type="password"
+            value={apiKey}
+            onChange={(e) => setApiKey(e.target.value)}
+            placeholder="Cloudflare API token"
+            required
+            hint="We verify the token against Cloudflare, then let you pick zones."
+            error={error}
+          />
+        ) : (
+          <>
+            <Input
+              label="Access Key ID"
+              name="apiAccessKey"
+              type="password"
+              value={apiAccessKey}
+              onChange={(e) => setApiAccessKey(e.target.value)}
+              placeholder="Huawei Cloud AK"
+              required
+              hint="Your Huawei Cloud access key ID."
+            />
+            <Input
+              label="Secret Access Key"
+              name="apiSecretKey"
+              type="password"
+              value={apiSecretKey}
+              onChange={(e) => setApiSecretKey(e.target.value)}
+              placeholder="Huawei Cloud SK"
+              required
+              hint="Your Huawei Cloud secret access key."
+            />
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-slate-700">Region</label>
+              <select
+                value={region}
+                onChange={(e) => setRegion(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              >
+                <option value="">默认（全局）</option>
+                {HW_REGIONS.map((r) => (
+                  <option key={r.value} value={r.value}>
+                    {r.label} ({r.value})
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-slate-400">华为云 DNS 为全局服务，通常无需选择区域。</p>
+            </div>
+            {error && <p className="text-xs text-red-600">{error}</p>}
+          </>
+        )}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onCancel} disabled={busy}>Cancel</Button>
           <Button type="submit" loading={busy}>Verify & continue</Button>
@@ -225,10 +328,23 @@ function ProviderRow({ provider, onChanged }: { provider: Provider; onChanged: (
               <h3 className="truncate text-sm font-semibold text-slate-900">{provider.name}</h3>
             </div>
             <dl className="mt-1 flex flex-wrap gap-x-6 gap-y-0.5 text-xs text-slate-500">
-              <div>
-                <dt className="inline">Token:</dt>{" "}
-                <dd className="inline font-mono text-slate-700">{provider.apiKey}</dd>
-              </div>
+              {provider.type === "cloudflare" ? (
+                <div>
+                  <dt className="inline">Token:</dt>{" "}
+                  <dd className="inline font-mono text-slate-700">{provider.apiKey}</dd>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <dt className="inline">AK:</dt>{" "}
+                    <dd className="inline font-mono text-slate-700">{provider.apiAccessKey}</dd>
+                  </div>
+                  <div>
+                    <dt className="inline">Region:</dt>{" "}
+                    <dd className="inline text-slate-700">{provider.region}</dd>
+                  </div>
+                </>
+              )}
               <div>
                 <dt className="inline">Zones:</dt>{" "}
                 <dd className="inline text-slate-700">{zoneCount === 0 ? "all" : zoneCount}</dd>

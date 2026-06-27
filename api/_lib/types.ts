@@ -26,13 +26,16 @@ export interface Session {
   createdAt: string; // ISO timestamp
 }
 
-export type ProviderType = "cloudflare";
+export type ProviderType = "cloudflare" | "huawei";
 
 export interface Provider {
   id: string;
   type: ProviderType;
   name: string;
-  apiKey: string; // plaintext (MVP)
+  apiKey: string; // plaintext (MVP) — Cloudflare token
+  apiAccessKey?: string; // Huawei Cloud AK
+  apiSecretKey?: string; // Huawei Cloud SK
+  region?: string; // Huawei Cloud region code (e.g. cn-north-1)
   createdAt: string; // ISO timestamp
   /** Zone ids the user chose to manage (empty = all accessible zones). */
   selectedZones: string[];
@@ -68,6 +71,7 @@ export interface DnsRecord {
   proxied?: boolean;
   priority?: number;
   comment?: string;
+  line?: string; // Huawei Cloud: resolution line (线路类型)
 }
 
 export interface CloudflareResponse<T> {

@@ -3,6 +3,7 @@ import { redis, KEYS } from "../../_lib/redis";
 import { ok, error, notFound } from "../../_lib/response";
 import { queryStr } from "../../_lib/http";
 import { cfFetch } from "../../_lib/cloudflare";
+import { listZones as hwListZones } from "../../_lib/huawei";
 import type { ApiResponse, Provider, Zone } from "../../_lib/types";
 import type { AuthedRequest } from "../../_lib/middleware";
 
@@ -15,7 +16,7 @@ interface CfZone {
 
 /**
  * GET /api/providers/:id/zones
- * Proxy Cloudflare's /zones list (filtered to this token's accessible zones).
+ * List zones accessible to this provider.
  */
 async function list(req: AuthedRequest, res: ApiResponse) {
   const id = queryStr(req, "id");
@@ -26,15 +27,28 @@ async function list(req: AuthedRequest, res: ApiResponse) {
   if (!provider) return notFound(res, "Provider not found");
 
   try {
-    const result = await cfFetch<CfZone[]>(provider.apiKey, "/zones", {
-      query: { per_page: 50 },
-    });
-    const zones: Zone[] = (Array.isArray(result) ? result : []).map((z) => ({
-      id: z.id,
-      name: z.name,
-      status: z.status,
-    }));
-    return ok(res, zones);
+    if (provider.type === "cloudflare") {
+      const result = await cfFetch<CfZone[]>(provider.apiKey, "/zones", {
+        query: { per_page: 50 },
+      });
+      const zones: Zone[] = (Array.isArray(result) ? result : []).map((z) => ({
+        id: z.id,
+        name: z.name,
+        status: z.status,
+      }));
+      return ok(res, zones);
+    }
+
+    if (provider.type === "huawei") {
+      const zones = await hwListZones(
+        provider.apiAccessKey ?? "",
+        provider.apiSecretKey ?? "",
+        provider.region
+      );
+      return ok(res, zones);
+    }
+
+    return error(res, `Unsupported provider type: ${provider.type}`, 400);
   } catch (e) {
     return error(res, `Failed to fetch zones: ${e instanceof Error ? e.message : "unknown error"}`, 502);
   }

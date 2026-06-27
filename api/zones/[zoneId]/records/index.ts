@@ -3,6 +3,11 @@ import { redis, KEYS } from "../../../_lib/redis";
 import { ok, error, notFound } from "../../../_lib/response";
 import { getBody, queryStr } from "../../../_lib/http";
 import { cfFetch } from "../../../_lib/cloudflare";
+import {
+  listRecordSets,
+  createRecordSet as hwCreateRecordSet,
+  stripHost,
+} from "../../../_lib/huawei";
 import type { ApiResponse, Provider, DnsRecord } from "../../../_lib/types";
 import type { AuthedRequest } from "../../../_lib/middleware";
 
@@ -24,7 +29,7 @@ interface CfRecord {
   comment?: string | { content?: string };
 }
 
-function normalize(r: CfRecord): DnsRecord {
+function normalizeCf(r: CfRecord): DnsRecord {
   const comment =
     typeof r.comment === "string"
       ? r.comment
@@ -43,23 +48,50 @@ function normalize(r: CfRecord): DnsRecord {
   };
 }
 
+function normalizeHw(rs: { id: string; name: string; type: string; ttl: number; records: string[]; line?: string }, zoneName: string): DnsRecord {
+  return {
+    id: rs.id,
+    type: rs.type as DnsRecord["type"],
+    name: stripHost(rs.name, zoneName),
+    content: rs.records.length > 1 ? rs.records.join(", ") : (rs.records[0] ?? ""),
+    ttl: rs.ttl,
+    line: rs.line,
+  };
+}
+
 /**
  * GET /api/zones/:zoneId/records?providerId=...
  */
 async function list(req: AuthedRequest, res: ApiResponse) {
   const zoneId = queryStr(req, "zoneId");
+  const zoneName = queryStr(req, "zoneName") ?? "";
   const provider = await findProvider(queryStr(req, "providerId"));
   if (!provider) return notFound(res, "Provider not found");
   if (!zoneId) return error(res, "zoneId is required");
 
   try {
-    const result = await cfFetch<CfRecord[]>(
-      provider.apiKey,
-      `/zones/${zoneId}/dns_records`,
-      { query: { per_page: 100 } }
-    );
-    const records = (Array.isArray(result) ? result : []).map(normalize);
-    return ok(res, records);
+    if (provider.type === "cloudflare") {
+      const result = await cfFetch<CfRecord[]>(
+        provider.apiKey,
+        `/zones/${zoneId}/dns_records`,
+        { query: { per_page: 100 } }
+      );
+      const records = (Array.isArray(result) ? result : []).map(normalizeCf);
+      return ok(res, records);
+    }
+
+    if (provider.type === "huawei") {
+      const recordSets = await listRecordSets(
+        provider.apiAccessKey ?? "",
+        provider.apiSecretKey ?? "",
+        provider.region,
+        zoneId
+      );
+      const records = recordSets.map((rs) => normalizeHw(rs, zoneName));
+      return ok(res, records);
+    }
+
+    return error(res, `Unsupported provider type: ${provider.type}`, 400);
   } catch (e) {
     return error(res, `Failed to fetch records: ${e instanceof Error ? e.message : "unknown error"}`, 502);
   }
@@ -71,6 +103,7 @@ async function list(req: AuthedRequest, res: ApiResponse) {
  */
 async function create(req: AuthedRequest, res: ApiResponse) {
   const zoneId = queryStr(req, "zoneId");
+  const zoneName = queryStr(req, "zoneName") ?? "";
   const provider = await findProvider(queryStr(req, "providerId"));
   if (!provider) return notFound(res, "Provider not found");
   if (!zoneId) return error(res, "zoneId is required");
@@ -80,22 +113,48 @@ async function create(req: AuthedRequest, res: ApiResponse) {
     return error(res, "type, name and content are required");
   }
 
-  const payload: Record<string, unknown> = {
-    type: body.type,
-    name: body.name,
-    content: body.content,
-    ttl: body.ttl ?? 1, // 1 = auto
-  };
-  if (body.proxied !== undefined) payload.proxied = body.proxied;
-  if (body.priority !== undefined) payload.priority = body.priority;
-
   try {
-    const result = await cfFetch<CfRecord>(
-      provider.apiKey,
-      `/zones/${zoneId}/dns_records`,
-      { method: "POST", body: payload }
-    );
-    return ok(res, normalize(result), 201);
+    if (provider.type === "cloudflare") {
+      const payload: Record<string, unknown> = {
+        type: body.type,
+        name: body.name,
+        content: body.content,
+        ttl: body.ttl ?? 1, // 1 = auto
+      };
+      if (body.proxied !== undefined) payload.proxied = body.proxied;
+      if (body.priority !== undefined) payload.priority = body.priority;
+
+      const result = await cfFetch<CfRecord>(
+        provider.apiKey,
+        `/zones/${zoneId}/dns_records`,
+        { method: "POST", body: payload }
+      );
+      return ok(res, normalizeCf(result), 201);
+    }
+
+    if (provider.type === "huawei") {
+      // Huawei Cloud RecordSet: records is an array of strings
+      const records = body.content.includes(", ")
+        ? body.content.split(", ")
+        : [body.content];
+      const rs = await hwCreateRecordSet(
+        provider.apiAccessKey ?? "",
+        provider.apiSecretKey ?? "",
+        provider.region,
+        zoneId,
+        zoneName,
+        {
+          name: body.name,
+          type: body.type,
+          ttl: body.ttl ?? 300,
+          records,
+          line: body.line,
+        }
+      );
+      return ok(res, normalizeHw(rs, zoneName), 201);
+    }
+
+    return error(res, `Unsupported provider type: ${provider.type}`, 400);
   } catch (e) {
     return error(res, `Failed to create record: ${e instanceof Error ? e.message : "unknown error"}`, 502);
   }

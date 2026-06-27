@@ -61,7 +61,7 @@ export function Zones() {
           {zones.map((z) => (
             <li key={`${z.providerId}:${z.id}`} className="border-b border-slate-100 last:border-b-0">
               <Link
-                to={`/zones/${z.id}/records?providerId=${z.providerId}`}
+                to={`/zones/${z.id}/records?providerId=${z.providerId}&providerType=${z.providerType}&zoneName=${encodeURIComponent(z.name)}`}
                 className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-slate-50"
               >
                 <ProviderLogo type={z.providerType} />

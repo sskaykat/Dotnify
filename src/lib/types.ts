@@ -14,13 +14,16 @@ export interface SetupResponse {
   createdAt: string;
 }
 
-export type ProviderType = "cloudflare";
+export type ProviderType = "cloudflare" | "huawei";
 
 export interface Provider {
   id: string;
   type: ProviderType;
   name: string;
-  apiKey: string; // masked on read in the UI; backend stores plaintext
+  apiKey: string; // masked on read in the UI; backend stores plaintext — Cloudflare token
+  apiAccessKey?: string; // Huawei Cloud AK (masked)
+  apiSecretKey?: string; // Huawei Cloud SK (masked)
+  region?: string; // Huawei Cloud region code
   createdAt: string;
   selectedZones: string[];
 }
@@ -61,4 +64,5 @@ export interface DnsRecord {
   proxied?: boolean;
   priority?: number;
   comment?: string;
+  line?: string; // Huawei Cloud: resolution line (线路类型)
 }

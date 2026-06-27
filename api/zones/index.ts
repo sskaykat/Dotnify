@@ -2,6 +2,7 @@ import { requireAuth } from "../_lib/middleware";
 import { redis, KEYS } from "../_lib/redis";
 import { ok, error } from "../_lib/response";
 import { cfFetch } from "../_lib/cloudflare";
+import { listZones as hwListZones } from "../_lib/huawei";
 import type { ApiResponse, Provider, Zone } from "../_lib/types";
 import type { AuthedRequest } from "../_lib/middleware";
 
@@ -21,10 +22,6 @@ interface ZoneWithProvider extends Zone {
  * GET /api/zones
  * Aggregate zones from every configured provider, filtered by each provider's
  * `selectedZones` list. Returns a flat list sorted by zone name.
- *
- * If a provider's token has gone bad, its zones are simply skipped (the
- * endpoint still returns the zones from other providers) but the error is
- * surfaced per-provider in `errors`.
  */
 async function list(_req: AuthedRequest, res: ApiResponse) {
   const raw = (await redis.get<Provider[]>(KEYS.providers)) ?? [];
@@ -36,8 +33,20 @@ async function list(_req: AuthedRequest, res: ApiResponse) {
   await Promise.all(
     providers.map(async (p) => {
       try {
-        const result = await cfFetch<CfZone[]>(p.apiKey, "/zones", { query: { per_page: 50 } });
-        const zones = Array.isArray(result) ? result : [];
+        let zones: Zone[] = [];
+
+        if (p.type === "cloudflare") {
+          const result = await cfFetch<CfZone[]>(p.apiKey, "/zones", { query: { per_page: 50 } });
+          const cfZones = Array.isArray(result) ? result : [];
+          zones = cfZones.map((z) => ({ id: z.id, name: z.name, status: z.status }));
+        } else if (p.type === "huawei") {
+          zones = await hwListZones(
+            p.apiAccessKey ?? "",
+            p.apiSecretKey ?? "",
+            p.region
+          );
+        }
+
         const selected = Array.isArray(p.selectedZones) ? p.selectedZones : [];
         const allow = selected.length > 0 ? new Set(selected) : null;
         for (const z of zones) {
