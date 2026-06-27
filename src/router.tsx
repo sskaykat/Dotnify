@@ -5,6 +5,7 @@ import { ROOT_LOADER_ID } from "@/lib/constants";
 import { Layout } from "@/components/Layout";
 import { Setup } from "@/pages/Setup";
 import { Login } from "@/pages/Login";
+import { Home } from "@/pages/Home";
 import { Providers } from "@/pages/Providers";
 import { Zones } from "@/pages/Zones";
 import { Records } from "@/pages/Records";
@@ -49,14 +50,14 @@ function SetupGuard() {
 }
 
 /**
- * Guard for /login: redirect to /setup if admin missing, or to /providers if
+ * Guard for /login: redirect to /setup if admin missing, or to / if
  * already authenticated.
  */
 function LoginGuard() {
   const me = useMe();
   if (!me) return <SpinnerShell />;
   if (me.setupRequired) return <Navigate to="/setup" replace />;
-  if (me.authenticated) return <Navigate to="/providers" replace />;
+  if (me.authenticated) return <Navigate to="/" replace />;
   return <Login />;
 }
 
@@ -74,7 +75,7 @@ function IndexRedirect() {
   if (!me) return <SpinnerShell />;
   if (me.setupRequired) return <Navigate to="/setup" replace />;
   if (!me.authenticated) return <Navigate to="/login" replace />;
-  return <Navigate to="/providers" replace />;
+  return <Home />;
 }
 
 export const router = createBrowserRouter([
@@ -88,7 +89,10 @@ export const router = createBrowserRouter([
       { path: "setup", element: <SetupGuard /> },
       { path: "login", element: <LoginGuard /> },
       { path: "providers", element: <AuthGuard><Providers /></AuthGuard> },
-      { path: "zones", element: <AuthGuard><Zones /></AuthGuard> },
+      { path: "domains", element: <AuthGuard><Zones /></AuthGuard> },
+      { path: "domains/:zoneId/records", element: <AuthGuard><Records /></AuthGuard> },
+      // Legacy redirect
+      { path: "zones", element: <Navigate to="/domains" replace /> },
       { path: "zones/:zoneId/records", element: <AuthGuard><Records /></AuthGuard> },
       { path: "*", element: <Navigate to="/" replace /> },
     ],

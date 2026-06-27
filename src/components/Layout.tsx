@@ -4,8 +4,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "./Button";
 
 const NAV = [
+  { to: "/", label: "Home", end: true },
+  { to: "/domains", label: "Domains" },
   { to: "/providers", label: "Providers" },
-  { to: "/zones", label: "Zones" },
 ];
 
 export function Layout() {
@@ -51,6 +52,7 @@ export function Layout() {
               <NavLink
                 key={item.to}
                 to={item.to}
+                end={item.end}
                 className={({ isActive }) =>
                   `rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                     isActive

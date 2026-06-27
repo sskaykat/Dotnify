@@ -64,5 +64,5 @@ export interface DnsRecord {
   proxied?: boolean;
   priority?: number;
   comment?: string;
-  line?: string; // Huawei Cloud: resolution line (线路类型)
+  line?: string; // Huawei Cloud: resolution line
 }

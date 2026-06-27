@@ -51,7 +51,7 @@ const HW_NAME_MAP = new Map<string, string>(
 );
 
 function getLineName(lineId: string | undefined): string {
-  if (!lineId) return "全网默认";
+  if (!lineId) return "Default";
   return HW_NAME_MAP.get(lineId) ?? lineId;
 }
 
@@ -163,8 +163,8 @@ export function Records() {
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <Link to="/zones" className="text-sm text-brand-600 hover:underline">
-            ← Back to zones
+          <Link to="/domains" className="text-sm text-brand-600 hover:underline">
+            ← Back to domains
           </Link>
           <h1 className="mt-1 text-xl font-semibold text-slate-900">
             DNS records
@@ -490,7 +490,7 @@ function RecordForm({
         />
         {showLine && (
           <div className="flex flex-col gap-1 md:col-span-2">
-            <label className="text-sm font-medium text-slate-700">Line (线路)</label>
+            <label className="text-sm font-medium text-slate-700">Line</label>
             <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
               {/* Level 1: Category */}
               <select
@@ -503,9 +503,9 @@ function RecordForm({
                 }}
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
               >
-                <option value="default">全网默认</option>
-                <option value="carrier">运营商解析</option>
-                <option value="region">地域解析</option>
+                <option value="default">Default</option>
+                <option value="carrier">Carrier</option>
+                <option value="region">Region</option>
               </select>
 
               {/* Level 2: Group */}
@@ -520,7 +520,7 @@ function RecordForm({
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 disabled:bg-slate-100 disabled:text-slate-400"
               >
                 <option value="">
-                  {lineCategory === "default" ? "默认" : "选择..."}
+                  {lineCategory === "default" ? "Default" : "Select..."}
                 </option>
                 {l2Options.map((id) => (
                   <option key={id} value={id}>{HW_DATA[id].name}</option>
@@ -538,7 +538,7 @@ function RecordForm({
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 disabled:bg-slate-100 disabled:text-slate-400"
               >
                 <option value="">
-                  {lineCategory === "default" ? "默认" : l3Options.length === 0 ? "默认" : "选择..."}
+                  {lineCategory === "default" ? "Default" : l3Options.length === 0 ? "Default" : "Select..."}
                 </option>
                 {l3Options.map((id) => (
                   <option key={id} value={id}>{stripPrefix(HW_DATA[id].name)}</option>
@@ -553,7 +553,7 @@ function RecordForm({
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 disabled:bg-slate-100 disabled:text-slate-400"
               >
                 <option value="">
-                  {lineCategory !== "carrier" ? "默认" : l4Options.length === 0 ? "默认" : "选择..."}
+                  {lineCategory !== "carrier" ? "Default" : l4Options.length === 0 ? "Default" : "Select..."}
                 </option>
                 {l4Options.map((id) => (
                   <option key={id} value={id}>{stripPrefix(HW_DATA[id].name)}</option>

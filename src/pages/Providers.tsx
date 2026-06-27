@@ -9,15 +9,15 @@ import { Spinner } from "@/components/Spinner";
 import { EmptyState } from "@/components/EmptyState";
 
 const HW_REGIONS = [
-  { value: "cn-north-1", label: "华北-北京一" },
-  { value: "cn-north-4", label: "华北-北京四" },
-  { value: "cn-east-2", label: "华东-上海二" },
-  { value: "cn-east-3", label: "华东-上海一" },
-  { value: "cn-south-1", label: "华南-广州" },
-  { value: "cn-southwest-2", label: "西南-贵阳一" },
-  { value: "ap-southeast-1", label: "中国-香港" },
-  { value: "ap-southeast-2", label: "亚太-曼谷" },
-  { value: "ap-southeast-3", label: "亚太-新加坡" },
+  { value: "cn-north-1", label: "North Beijing-1" },
+  { value: "cn-north-4", label: "North Beijing-4" },
+  { value: "cn-east-2", label: "East Shanghai-2" },
+  { value: "cn-east-3", label: "East Shanghai-1" },
+  { value: "cn-south-1", label: "South Guangzhou" },
+  { value: "cn-southwest-2", label: "Southwest Guiyang-1" },
+  { value: "ap-southeast-1", label: "Hong Kong" },
+  { value: "ap-southeast-2", label: "Bangkok" },
+  { value: "ap-southeast-3", label: "Singapore" },
 ];
 
 export function Providers() {
@@ -261,14 +261,14 @@ function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => v
                 onChange={(e) => setRegion(e.target.value)}
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
               >
-                <option value="">默认（全局）</option>
+                <option value="">Default (Global)</option>
                 {HW_REGIONS.map((r) => (
                   <option key={r.value} value={r.value}>
                     {r.label} ({r.value})
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-slate-400">华为云 DNS 为全局服务，通常无需选择区域。</p>
+              <p className="text-xs text-slate-400">Huawei Cloud DNS is a global service — usually no region selection is needed.</p>
             </div>
             {error && <p className="text-xs text-red-600">{error}</p>}
           </>

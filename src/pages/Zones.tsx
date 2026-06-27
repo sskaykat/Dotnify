@@ -21,7 +21,7 @@ export function Zones() {
     <div className="mx-auto max-w-4xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">Zones</h1>
+          <h1 className="text-xl font-semibold text-slate-900">Domains</h1>
           <p className="mt-0.5 text-sm text-slate-500">All domains from every configured provider.</p>
         </div>
         {isValidating && !loading && (
@@ -52,8 +52,8 @@ export function Zones() {
         </Card>
       ) : zones.length === 0 ? (
         <EmptyState
-          title="No zones yet"
-          description="Add a provider and select its zones to see them here."
+          title="No domains yet"
+          description="Add a provider and select its domains to see them here."
           action={<Link to="/providers"><Button>Go to providers</Button></Link>}
         />
       ) : (
@@ -61,7 +61,7 @@ export function Zones() {
           {zones.map((z) => (
             <li key={`${z.providerId}:${z.id}`} className="border-b border-slate-100 last:border-b-0">
               <Link
-                to={`/zones/${z.id}/records?providerId=${z.providerId}&providerType=${z.providerType}&zoneName=${encodeURIComponent(z.name)}`}
+                to={`/domains/${z.id}/records?providerId=${z.providerId}&providerType=${z.providerType}&zoneName=${encodeURIComponent(z.name)}`}
                 className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-slate-50"
               >
                 <ProviderLogo type={z.providerType} />
