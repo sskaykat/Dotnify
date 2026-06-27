@@ -283,22 +283,10 @@ function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => v
 }
 
 function ProviderRow({ provider, onChanged }: { provider: Provider; onChanged: () => void }) {
+  const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  async function testConnection() {
-    setBusy(true);
-    setError(null);
-    try {
-      await apiFetch(`/api/providers/${provider.id}/zones`, { allow401: true });
-      setError(null);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Connection test failed");
-    } finally {
-      setBusy(false);
-    }
-  }
 
   async function remove() {
     setBusy(true);
@@ -312,6 +300,18 @@ function ProviderRow({ provider, onChanged }: { provider: Provider; onChanged: (
     } finally {
       setBusy(false);
     }
+  }
+
+  if (editing) {
+    return (
+      <li>
+        <EditProviderForm
+          provider={provider}
+          onSaved={() => { setEditing(false); onChanged(); }}
+          onCancel={() => setEditing(false)}
+        />
+      </li>
+    );
   }
 
   const zoneCount = provider.selectedZones.length;
@@ -357,8 +357,8 @@ function ProviderRow({ provider, onChanged }: { provider: Provider; onChanged: (
             {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <Button variant="secondary" onClick={testConnection} loading={busy && !confirming} disabled={confirming}>
-              Test
+            <Button variant="secondary" onClick={() => setEditing(true)} disabled={confirming}>
+              Edit
             </Button>
             {confirming ? (
               <>
@@ -378,5 +378,109 @@ function ProviderRow({ provider, onChanged }: { provider: Provider; onChanged: (
         </div>
       </Card>
     </li>
+  );
+}
+
+function EditProviderForm({ provider, onSaved, onCancel }: { provider: Provider; onSaved: () => void; onCancel: () => void }) {
+  const [name, setName] = useState(provider.name);
+  const [apiKey, setApiKey] = useState("");
+  const [apiAccessKey, setApiAccessKey] = useState("");
+  const [apiSecretKey, setApiSecretKey] = useState("");
+  const [region, setRegion] = useState(provider.region ?? "");
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (!name.trim()) {
+      setError("Name is required");
+      return;
+    }
+    setBusy(true);
+    try {
+      const body: Record<string, unknown> = { name: name.trim() };
+      if (provider.type === "cloudflare" && apiKey.trim()) {
+        body.apiKey = apiKey.trim();
+      }
+      if (provider.type === "huawei") {
+        if (apiAccessKey.trim()) body.apiAccessKey = apiAccessKey.trim();
+        if (apiSecretKey.trim()) body.apiSecretKey = apiSecretKey.trim();
+        if (region !== (provider.region ?? "")) body.region = region;
+      }
+      await apiFetch(`/api/providers/${provider.id}`, {
+        method: "PATCH",
+        body,
+      });
+      onSaved();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to update provider");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card title={`Edit ${provider.name}`}>
+      <form onSubmit={save} className="flex flex-col gap-4">
+        <Input
+          label="Display name"
+          name="name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="My provider"
+          required
+        />
+        {provider.type === "cloudflare" ? (
+          <Input
+            label="API token"
+            name="apiKey"
+            type="password"
+            value={apiKey}
+            onChange={(e) => setApiKey(e.target.value)}
+            placeholder="Leave blank to keep current token"
+          />
+        ) : (
+          <>
+            <Input
+              label="Access Key ID"
+              name="apiAccessKey"
+              type="password"
+              value={apiAccessKey}
+              onChange={(e) => setApiAccessKey(e.target.value)}
+              placeholder="Leave blank to keep current key"
+            />
+            <Input
+              label="Secret Access Key"
+              name="apiSecretKey"
+              type="password"
+              value={apiSecretKey}
+              onChange={(e) => setApiSecretKey(e.target.value)}
+              placeholder="Leave blank to keep current key"
+            />
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-slate-700">Region</label>
+              <select
+                value={region}
+                onChange={(e) => setRegion(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              >
+                <option value="">Default (Global)</option>
+                {HW_REGIONS.map((r) => (
+                  <option key={r.value} value={r.value}>
+                    {r.label} ({r.value})
+                  </option>
+                ))}
+              </select>
+            </div>
+          </>
+        )}
+        {error && <p className="text-xs text-red-600">{error}</p>}
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="secondary" onClick={onCancel} disabled={busy}>Cancel</Button>
+          <Button type="submit" loading={busy}>Save</Button>
+        </div>
+      </form>
+    </Card>
   );
 }
