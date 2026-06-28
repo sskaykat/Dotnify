@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
+import { useLang } from "@/lib/i18n";
 import type { SetupResponse } from "@/lib/types";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
@@ -8,6 +9,7 @@ import { Card } from "@/components/Card";
 
 export function Setup() {
   const { refresh } = useAuth();
+  const { t } = useLang();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -18,11 +20,11 @@ export function Setup() {
     e.preventDefault();
     setError(null);
     if (password.length < 8) {
-      setError("Password must be at least 8 characters");
+      setError(t("setup.passwordTooShort"));
       return;
     }
     if (password !== confirm) {
-      setError("Passwords do not match");
+      setError(t("setup.passwordMismatch"));
       return;
     }
     setBusy(true);
@@ -44,10 +46,10 @@ export function Setup() {
 
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6">
-      <Card title="Create admin account" description="This will initialize dotnify. You only need to do this once.">
+      <Card title={t("setup.title")} description={t("setup.description")}>
         <form onSubmit={submit} className="flex flex-col gap-4">
           <Input
-            label="Username"
+            label={t("setup.username")}
             name="username"
             autoComplete="username"
             value={username}
@@ -57,7 +59,7 @@ export function Setup() {
             minLength={3}
           />
           <Input
-            label="Password"
+            label={t("setup.password")}
             name="password"
             type="password"
             autoComplete="new-password"
@@ -65,10 +67,10 @@ export function Setup() {
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={8}
-            hint="At least 8 characters."
+            hint={t("setup.passwordHint")}
           />
           <Input
-            label="Confirm password"
+            label={t("setup.confirmPassword")}
             name="confirm"
             type="password"
             autoComplete="new-password"
@@ -78,7 +80,7 @@ export function Setup() {
             error={error}
           />
           <Button type="submit" loading={busy}>
-            Create admin
+            {t("setup.createAdmin")}
           </Button>
         </form>
       </Card>

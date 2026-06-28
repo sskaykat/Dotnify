@@ -1,0 +1,357 @@
+import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+
+export type Lang = "en" | "zh-CN";
+
+const STORAGE_KEY = "dotnify-lang";
+
+const translations: Record<Lang, Record<string, string>> = {
+  en: {
+    // Layout
+    "nav.home": "Home",
+    "nav.domains": "Domains",
+    "nav.providers": "Providers",
+    "header.signedInAs": "signed in as",
+    "header.signOut": "Sign out",
+
+    // Home
+    "home.title": "Dotnify",
+    "home.subtitle": "Manage DNS records across Cloudflare and Huawei Cloud from one place.",
+    "home.providers": "Providers",
+    "home.domains": "Domains",
+    "home.active": "Active",
+    "home.viewAllDomains": "View all {count} domains",
+    "home.getStarted": "Get started by adding your first DNS provider.",
+    "home.addProvider": "Add provider",
+    "home.noDomains": "No domains configured yet. Select zones from your providers.",
+    "home.manageProviders": "Manage providers",
+
+    // Login
+    "login.title": "Sign in",
+    "login.description": "Enter your admin credentials to manage DNS records.",
+    "login.username": "Username",
+    "login.password": "Password",
+    "login.signIn": "Sign in",
+
+    // Setup
+    "setup.title": "Create admin account",
+    "setup.description": "This will initialize Dotnify. You only need to do this once.",
+    "setup.username": "Username",
+    "setup.password": "Password",
+    "setup.confirmPassword": "Confirm password",
+    "setup.passwordHint": "At least 8 characters.",
+    "setup.createAdmin": "Create admin",
+    "setup.passwordTooShort": "Password must be at least 8 characters",
+    "setup.passwordMismatch": "Passwords do not match",
+
+    // Zones
+    "zones.title": "Domains",
+    "zones.subtitle": "All domains from every configured provider.",
+    "zones.updating": "Updating",
+    "zones.addDomain": "Add domain",
+    "zones.cancel": "Cancel",
+    "zones.retry": "Retry",
+    "zones.noDomains": "No domains yet",
+    "zones.noDomainsDesc": "Add a provider and select its domains to see them here.",
+    "zones.goToProviders": "Go to providers",
+    "zones.providersFailed": "Some providers failed to load:",
+    "zones.viewRecords": "View records →",
+    "zones.delete": "Delete",
+    "zones.confirm": "Confirm",
+    "zones.selectDomains": "Select domains",
+    "zones.selectDomainsDesc": "Choose which domains to manage for {provider}.",
+    "zones.allManaged": "All zones from this provider are already managed.",
+    "zones.selectToAdd": "Select domains to add",
+    "zones.addCount": "Add {count} domain{s}",
+    "zones.addDomainTitle": "Add domain",
+    "zones.addDomainDesc": "Select an existing provider to manage additional domains.",
+    "zones.noProviders": "No providers configured yet. Add one on the Providers page first.",
+    "zones.provider": "Provider",
+    "zones.allZones": "all zones",
+    "zones.zoneCount": "{count} zone{s}",
+    "zones.back": "Back",
+
+    // Providers
+    "providers.title": "DNS Providers",
+    "providers.subtitle": "Manage the API credentials used to access your DNS zones.",
+    "providers.addProvider": "Add provider",
+    "providers.cancel": "Cancel",
+    "providers.noProviders": "No providers yet",
+    "providers.noProvidersDesc": "Add a DNS provider to start managing its DNS records.",
+    "providers.addFirst": "Add your first provider",
+    "providers.edit": "Edit",
+    "providers.delete": "Delete",
+    "providers.confirmDelete": "Confirm delete",
+    "providers.editTitle": "Edit {name}",
+    "providers.displayName": "Display name",
+    "providers.providerType": "Provider type",
+    "providers.apiToken": "API token",
+    "providers.accessKeyId": "Access Key ID",
+    "providers.secretAccessKey": "Secret Access Key",
+    "providers.region": "Region",
+    "providers.regionDefault": "Default (Global)",
+    "providers.regionHint": "Huawei Cloud DNS is a global service — usually no region selection is needed.",
+    "providers.verifyContinue": "Verify & continue",
+    "providers.selectZones": "Select zones",
+    "providers.selectZonesDesc": "Pick which domains to manage. Leave all unchecked to manage every accessible zone.",
+    "providers.noAccessibleZones": "No zones accessible with these credentials.",
+    "providers.saveAllZones": "Save (all zones)",
+    "providers.saveCount": "Save ({count} zone{s})",
+    "providers.nameRequired": "Name is required",
+    "providers.apiTokenRequired": "API token is required",
+    "providers.akSkRequired": "Access Key ID and Secret Access Key are required",
+    "providers.verificationFailed": "Verification failed",
+    "providers.saveFailed": "Failed to save provider",
+    "providers.updateFailed": "Failed to update provider",
+    "providers.deleteFailed": "Failed to delete provider",
+    "providers.leaveBlankToken": "Leave blank to keep current token",
+    "providers.leaveBlankKey": "Leave blank to keep current key",
+    "providers.token": "Token",
+    "providers.ak": "AK",
+    "providers.zones": "Zones",
+    "providers.added": "Added",
+    "providers.all": "all",
+    "providers.save": "Save",
+
+    // Records
+    "records.missingParams": "Missing parameters",
+    "records.missingParamsDesc": "Open this page from the Zones list.",
+    "records.backToDomains": "← Back to domains",
+    "records.dnsRecords": "DNS records",
+    "records.zone": "Zone",
+    "records.updating": "Updating",
+    "records.addRecord": "Add record",
+    "records.cancel": "Cancel",
+    "records.type": "Type",
+    "records.name": "Name",
+    "records.content": "Content",
+    "records.ttl": "TTL",
+    "records.line": "Line",
+    "records.proxied": "Proxied",
+    "records.actions": "Actions",
+    "records.retry": "Retry",
+    "records.noRecords": "No records",
+    "records.noRecordsDesc": "This zone has no DNS records yet.",
+    "records.edit": "Edit",
+    "records.editRecord": "Edit record",
+    "records.createRecord": "Create record",
+    "records.namePlaceholder": "@ or subdomain",
+    "records.contentPlaceholder": "e.g. 192.0.2.1",
+    "records.priority": "Priority",
+    "records.priorityHint": "Required for MX / SRV records.",
+    "records.ttlSeconds": "TTL (seconds)",
+    "records.ttlAutoHint": "Use 1 for Auto.",
+    "records.confirm": "Confirm",
+    "records.delete": "Delete",
+    "records.nameContentRequired": "Name and content are required",
+    "records.saveFailed": "Failed to save record",
+    "records.deleteFailed": "Failed to delete",
+    "records.yes": "Yes",
+    "records.no": "No",
+    "records.auto": "Auto",
+    "records.carrier": "Carrier",
+    "records.region": "Region",
+    "records.default": "Default",
+    "records.selectDot": "Select...",
+    "records.proxiedHint": "Cloudflare orange-cloud",
+    "records.save": "Save",
+    "records.create": "Create",
+  },
+
+  "zh-CN": {
+    // Layout
+    "nav.home": "首页",
+    "nav.domains": "域名",
+    "nav.providers": "服务商",
+    "header.signedInAs": "登录为",
+    "header.signOut": "退出登录",
+
+    // Home
+    "home.title": "Dotnify",
+    "home.subtitle": "在一个地方管理 Cloudflare 和华为云的 DNS 记录。",
+    "home.providers": "服务商",
+    "home.domains": "域名",
+    "home.active": "活跃",
+    "home.viewAllDomains": "查看全部 {count} 个域名",
+    "home.getStarted": "添加你的第一个 DNS 服务商以开始使用。",
+    "home.addProvider": "添加服务商",
+    "home.noDomains": "暂无已配置的域名，请从服务商中选择解析域。",
+    "home.manageProviders": "管理服务商",
+
+    // Login
+    "login.title": "登录",
+    "login.description": "输入管理员凭据以管理 DNS 记录。",
+    "login.username": "用户名",
+    "login.password": "密码",
+    "login.signIn": "登录",
+
+    // Setup
+    "setup.title": "创建管理员账户",
+    "setup.description": "这将初始化 Dotnify。你只需执行一次。",
+    "setup.username": "用户名",
+    "setup.password": "密码",
+    "setup.confirmPassword": "确认密码",
+    "setup.passwordHint": "至少 8 个字符。",
+    "setup.createAdmin": "创建管理员",
+    "setup.passwordTooShort": "密码至少需要 8 个字符",
+    "setup.passwordMismatch": "两次输入的密码不一致",
+
+    // Zones
+    "zones.title": "域名",
+    "zones.subtitle": "来自所有已配置服务商的域名。",
+    "zones.updating": "更新中",
+    "zones.addDomain": "添加域名",
+    "zones.cancel": "取消",
+    "zones.retry": "重试",
+    "zones.noDomains": "暂无域名",
+    "zones.noDomainsDesc": "添加一个服务商并选择其域名以在此处查看。",
+    "zones.goToProviders": "前往服务商",
+    "zones.providersFailed": "部分服务商加载失败：",
+    "zones.viewRecords": "查看记录 →",
+    "zones.delete": "删除",
+    "zones.confirm": "确认",
+    "zones.selectDomains": "选择域名",
+    "zones.selectDomainsDesc": "选择要为 {provider} 管理的域名。",
+    "zones.allManaged": "该服务商的所有解析域均已被管理。",
+    "zones.selectToAdd": "选择要添加的域名",
+    "zones.addCount": "添加 {count} 个域名",
+    "zones.addDomainTitle": "添加域名",
+    "zones.addDomainDesc": "选择一个已有的服务商来管理更多域名。",
+    "zones.noProviders": "暂无已配置的服务商，请先在服务商页面添加。",
+    "zones.provider": "服务商",
+    "zones.allZones": "所有解析域",
+    "zones.zoneCount": "{count} 个解析域",
+    "zones.back": "返回",
+
+    // Providers
+    "providers.title": "DNS 服务商",
+    "providers.subtitle": "管理用于访问 DNS 解析域的 API 凭据。",
+    "providers.addProvider": "添加服务商",
+    "providers.cancel": "取消",
+    "providers.noProviders": "暂无服务商",
+    "providers.noProvidersDesc": "添加一个 DNS 服务商以开始管理其 DNS 记录。",
+    "providers.addFirst": "添加第一个服务商",
+    "providers.edit": "编辑",
+    "providers.delete": "删除",
+    "providers.confirmDelete": "确认删除",
+    "providers.editTitle": "编辑 {name}",
+    "providers.displayName": "显示名称",
+    "providers.providerType": "服务商类型",
+    "providers.apiToken": "API 令牌",
+    "providers.accessKeyId": "Access Key ID",
+    "providers.secretAccessKey": "Secret Access Key",
+    "providers.region": "区域",
+    "providers.regionDefault": "默认（全局）",
+    "providers.regionHint": "华为云 DNS 是全局服务，通常无需选择区域。",
+    "providers.verifyContinue": "验证并继续",
+    "providers.selectZones": "选择解析域",
+    "providers.selectZonesDesc": "选择要管理的域名。全部不勾选则管理所有可访问的解析域。",
+    "providers.noAccessibleZones": "这些凭据无法访问任何解析域。",
+    "providers.saveAllZones": "保存（所有解析域）",
+    "providers.saveCount": "保存（{count} 个解析域）",
+    "providers.nameRequired": "名称为必填项",
+    "providers.apiTokenRequired": "API 令牌为必填项",
+    "providers.akSkRequired": "Access Key ID 和 Secret Access Key 为必填项",
+    "providers.verificationFailed": "验证失败",
+    "providers.saveFailed": "保存服务商失败",
+    "providers.updateFailed": "更新服务商失败",
+    "providers.deleteFailed": "删除服务商失败",
+    "providers.leaveBlankToken": "留空以保留当前令牌",
+    "providers.leaveBlankKey": "留空以保留当前密钥",
+    "providers.token": "令牌",
+    "providers.ak": "AK",
+    "providers.zones": "解析域",
+    "providers.added": "添加时间",
+    "providers.all": "全部",
+    "providers.save": "保存",
+
+    // Records
+    "records.missingParams": "缺少参数",
+    "records.missingParamsDesc": "请从域名列表打开此页面。",
+    "records.backToDomains": "← 返回域名列表",
+    "records.dnsRecords": "DNS 记录",
+    "records.zone": "解析域",
+    "records.updating": "更新中",
+    "records.addRecord": "添加记录",
+    "records.cancel": "取消",
+    "records.type": "类型",
+    "records.name": "名称",
+    "records.content": "内容",
+    "records.ttl": "TTL",
+    "records.line": "线路",
+    "records.proxied": "代理",
+    "records.actions": "操作",
+    "records.retry": "重试",
+    "records.noRecords": "暂无记录",
+    "records.noRecordsDesc": "该解析域暂无 DNS 记录。",
+    "records.edit": "编辑",
+    "records.editRecord": "编辑记录",
+    "records.createRecord": "创建记录",
+    "records.namePlaceholder": "@ 或子域名",
+    "records.contentPlaceholder": "例如 192.0.2.1",
+    "records.priority": "优先级",
+    "records.priorityHint": "MX / SRV 记录必填。",
+    "records.ttlSeconds": "TTL（秒）",
+    "records.ttlAutoHint": "使用 1 表示自动。",
+    "records.confirm": "确认",
+    "records.delete": "删除",
+    "records.nameContentRequired": "名称和内容为必填项",
+    "records.saveFailed": "保存记录失败",
+    "records.deleteFailed": "删除失败",
+    "records.yes": "是",
+    "records.no": "否",
+    "records.auto": "自动",
+    "records.carrier": "运营商",
+    "records.region": "地域",
+    "records.default": "默认",
+    "records.selectDot": "选择...",
+    "records.proxiedHint": "Cloudflare 橙云代理",
+    "records.save": "保存",
+    "records.create": "创建",
+  },
+};
+
+interface LangContextValue {
+  lang: Lang;
+  setLang: (lang: Lang) => void;
+  t: (key: string, params?: Record<string, string | number>) => string;
+}
+
+const LangContext = createContext<LangContextValue | null>(null);
+
+export function LangProvider({ children }: { children: ReactNode }) {
+  const [lang, setLangState] = useState<Lang>(() => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored === "en" || stored === "zh-CN") return stored;
+    return "en";
+  });
+
+  const setLang = useCallback((next: Lang) => {
+    setLangState(next);
+    localStorage.setItem(STORAGE_KEY, next);
+  }, []);
+
+  const t = useCallback(
+    (key: string, params?: Record<string, string | number>): string => {
+      let value = translations[lang][key] ?? key;
+      if (params) {
+        for (const [k, v] of Object.entries(params)) {
+          value = value.replace(`{${k}}`, String(v));
+        }
+      }
+      return value;
+    },
+    [lang],
+  );
+
+  return (
+    <LangContext.Provider value={{ lang, setLang, t }}>
+      {children}
+    </LangContext.Provider>
+  );
+}
+
+export function useLang(): LangContextValue {
+  const ctx = useContext(LangContext);
+  if (!ctx) throw new Error("useLang must be used within LangProvider");
+  return ctx;
+}

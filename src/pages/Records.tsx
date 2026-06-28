@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { apiFetch } from "@/lib/api";
 import { useFetch } from "@/hooks/useFetch";
+import { useLang } from "@/lib/i18n";
 import type { DnsRecord, ProviderType, RecordType } from "@/lib/types";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
@@ -125,6 +126,7 @@ function resolveLineToLevels(lineId: string): [string, string, string, string] {
 }
 
 export function Records() {
+  const { t } = useLang();
   const { zoneId } = useParams<{ zoneId: string }>();
   const [search] = useSearchParams();
   const providerId = search.get("providerId");
@@ -152,8 +154,8 @@ export function Records() {
     return (
       <div className="mx-auto max-w-5xl">
         <EmptyState
-          title="Missing parameters"
-          description="Open this page from the Zones list."
+          title={t("records.missingParams")}
+          description={t("records.missingParamsDesc")}
         />
       </div>
     );
@@ -164,20 +166,20 @@ export function Records() {
       <div className="flex items-center justify-between">
         <div>
           <Link to="/domains" className="text-sm text-brand-600 hover:underline">
-            ← Back to domains
+            {t("records.backToDomains")}
           </Link>
           <h1 className="mt-1 text-xl font-semibold text-slate-900">
-            DNS records
+            {t("records.dnsRecords")}
           </h1>
           <p className="mt-0.5 text-sm text-slate-500">
-            Zone <span className="font-mono text-slate-700">{zoneId}</span>
+            {t("records.zone")} <span className="font-mono text-slate-700">{zoneId}</span>
           </p>
         </div>
         <div className="flex items-center gap-3">
           {isValidating && !loading && (
             <span className="flex items-center gap-1.5 text-xs text-slate-400">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-500" />
-              Updating
+              {t("records.updating")}
             </span>
           )}
           <Button
@@ -187,7 +189,7 @@ export function Records() {
             }}
             variant={creating ? "secondary" : "primary"}
           >
-            {creating ? "Cancel" : "Add record"}
+            {creating ? t("records.cancel") : t("records.addRecord")}
           </Button>
         </div>
       </div>
@@ -225,13 +227,13 @@ export function Records() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase text-slate-500">
-                  <th className="px-4 py-2 font-medium">Type</th>
-                  <th className="px-4 py-2 font-medium">Name</th>
-                  <th className="px-4 py-2 font-medium">Content</th>
-                  <th className="px-4 py-2 font-medium">TTL</th>
-                  {showLine && <th className="px-4 py-2 font-medium">Line</th>}
-                  {showProxied && <th className="px-4 py-2 font-medium">Proxied</th>}
-                  <th className="px-4 py-2 text-right font-medium">Actions</th>
+                  <th className="px-4 py-2 font-medium">{t("records.type")}</th>
+                  <th className="px-4 py-2 font-medium">{t("records.name")}</th>
+                  <th className="px-4 py-2 font-medium">{t("records.content")}</th>
+                  <th className="px-4 py-2 font-medium">{t("records.ttl")}</th>
+                  {showLine && <th className="px-4 py-2 font-medium">{t("records.line")}</th>}
+                  {showProxied && <th className="px-4 py-2 font-medium">{t("records.proxied")}</th>}
+                  <th className="px-4 py-2 text-right font-medium">{t("records.actions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -250,13 +252,13 @@ export function Records() {
             className="mt-3"
             onClick={() => void refetch()}
           >
-            Retry
+            {t("records.retry")}
           </Button>
         </Card>
       ) : !records || records.length === 0 ? (
         <EmptyState
-          title="No records"
-          description="This zone has no DNS records yet."
+          title={t("records.noRecords")}
+          description={t("records.noRecordsDesc")}
         />
       ) : (
         <Card className="overflow-hidden p-0">
@@ -264,13 +266,13 @@ export function Records() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase text-slate-500">
-                  <th className="px-4 py-2 font-medium">Type</th>
-                  <th className="px-4 py-2 font-medium">Name</th>
-                  <th className="px-4 py-2 font-medium">Content</th>
-                  <th className="px-4 py-2 font-medium">TTL</th>
-                  {showLine && <th className="px-4 py-2 font-medium">Line</th>}
-                  {showProxied && <th className="px-4 py-2 font-medium">Proxied</th>}
-                  <th className="px-4 py-2 text-right font-medium">Actions</th>
+                  <th className="px-4 py-2 font-medium">{t("records.type")}</th>
+                  <th className="px-4 py-2 font-medium">{t("records.name")}</th>
+                  <th className="px-4 py-2 font-medium">{t("records.content")}</th>
+                  <th className="px-4 py-2 font-medium">{t("records.ttl")}</th>
+                  {showLine && <th className="px-4 py-2 font-medium">{t("records.line")}</th>}
+                  {showProxied && <th className="px-4 py-2 font-medium">{t("records.proxied")}</th>}
+                  <th className="px-4 py-2 text-right font-medium">{t("records.actions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -296,7 +298,7 @@ export function Records() {
                       )}
                     </td>
                     <td className="px-4 py-2 text-slate-600">
-                      {showProxied && r.ttl === 1 ? "Auto" : r.ttl}
+                      {showProxied && r.ttl === 1 ? t("records.auto") : r.ttl}
                     </td>
                     {showLine && (
                       <td className="px-4 py-2 text-slate-600">
@@ -305,7 +307,7 @@ export function Records() {
                     )}
                     {showProxied && (
                       <td className="px-4 py-2 text-slate-600">
-                        {r.proxied ? "Yes" : "No"}
+                        {r.proxied ? t("records.yes") : t("records.no")}
                       </td>
                     )}
                     <td className="px-4 py-2 text-right align-middle">
@@ -315,7 +317,7 @@ export function Records() {
                           className="px-2 py-[0.2rem] text-xs leading-none"
                           onClick={() => setEditing(r)}
                         >
-                          Edit
+                          {t("records.edit")}
                         </Button>
                       </div>
                     </td>
@@ -345,6 +347,7 @@ function RecordForm({
   record?: DnsRecord;
   onDone: () => void;
 }) {
+  const { t } = useLang();
   const isEdit = !!record;
   const showProxied = providerType === "cloudflare";
   const showLine = providerType === "huawei";
@@ -414,7 +417,7 @@ function RecordForm({
     e.preventDefault();
     setError(null);
     if (!name || content === "") {
-      setError("Name and content are required");
+      setError(t("records.nameContentRequired"));
       return;
     }
     setBusy(true);
@@ -435,62 +438,62 @@ function RecordForm({
       }
       onDone();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to save record");
+      setError(e instanceof Error ? e.message : t("records.saveFailed"));
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <Card title={isEdit ? "Edit record" : "Create record"}>
+    <Card title={isEdit ? t("records.editRecord") : t("records.createRecord")}>
       <form onSubmit={submit} className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-slate-700">Type</label>
+          <label className="text-sm font-medium text-slate-700">{t("records.type")}</label>
           <select
             value={type}
             onChange={(e) => setType(e.target.value as RecordType)}
             className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
           >
-            {RECORD_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {t}
+            {RECORD_TYPES.map((rt) => (
+              <option key={rt} value={rt}>
+                {rt}
               </option>
             ))}
           </select>
         </div>
         <Input
-          label="Name"
+          label={t("records.name")}
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="@ or subdomain"
+          placeholder={t("records.namePlaceholder")}
           required
         />
         <Input
-          label="Content"
+          label={t("records.content")}
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder="e.g. 192.0.2.1"
+          placeholder={t("records.contentPlaceholder")}
           required
         />
         {showPriority && (
           <Input
-            label="Priority"
+            label={t("records.priority")}
             type="number"
             value={priority}
             onChange={(e) => setPriority(e.target.value)}
-            hint="Required for MX / SRV records."
+            hint={t("records.priorityHint")}
           />
         )}
         <Input
-          label="TTL (seconds)"
+          label={t("records.ttlSeconds")}
           type="number"
           value={ttl}
           onChange={(e) => setTtl(Number(e.target.value))}
-          hint={showProxied ? "Use 1 for Auto." : undefined}
+          hint={showProxied ? t("records.ttlAutoHint") : undefined}
         />
         {showLine && (
           <div className="flex flex-col gap-1 md:col-span-2">
-            <label className="text-sm font-medium text-slate-700">Line</label>
+            <label className="text-sm font-medium text-slate-700">{t("records.line")}</label>
             <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
               {/* Level 1: Category */}
               <select
@@ -503,9 +506,9 @@ function RecordForm({
                 }}
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
               >
-                <option value="default">Default</option>
-                <option value="carrier">Carrier</option>
-                <option value="region">Region</option>
+                <option value="default">{t("records.default")}</option>
+                <option value="carrier">{t("records.carrier")}</option>
+                <option value="region">{t("records.region")}</option>
               </select>
 
               {/* Level 2: Group */}
@@ -520,7 +523,7 @@ function RecordForm({
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 disabled:bg-slate-100 disabled:text-slate-400"
               >
                 <option value="">
-                  {lineCategory === "default" ? "Default" : "Select..."}
+                  {lineCategory === "default" ? t("records.default") : t("records.selectDot")}
                 </option>
                 {l2Options.map((id) => (
                   <option key={id} value={id}>{HW_DATA[id].name}</option>
@@ -538,7 +541,7 @@ function RecordForm({
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 disabled:bg-slate-100 disabled:text-slate-400"
               >
                 <option value="">
-                  {lineCategory === "default" ? "Default" : l3Options.length === 0 ? "Default" : "Select..."}
+                  {lineCategory === "default" ? t("records.default") : l3Options.length === 0 ? t("records.default") : t("records.selectDot")}
                 </option>
                 {l3Options.map((id) => (
                   <option key={id} value={id}>{stripPrefix(HW_DATA[id].name)}</option>
@@ -553,7 +556,7 @@ function RecordForm({
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 disabled:bg-slate-100 disabled:text-slate-400"
               >
                 <option value="">
-                  {lineCategory !== "carrier" ? "Default" : l4Options.length === 0 ? "Default" : "Select..."}
+                  {lineCategory !== "carrier" ? t("records.default") : l4Options.length === 0 ? t("records.default") : t("records.selectDot")}
                 </option>
                 {l4Options.map((id) => (
                   <option key={id} value={id}>{stripPrefix(HW_DATA[id].name)}</option>
@@ -567,8 +570,8 @@ function RecordForm({
             <Toggle
               checked={proxied}
               onChange={setProxied}
-              label="Proxied"
-              hint="Cloudflare orange-cloud"
+              label={t("records.proxied")}
+              hint={t("records.proxiedHint")}
             />
           </div>
         )}
@@ -587,10 +590,10 @@ function RecordForm({
           </div>
           <div className="flex gap-2">
             <Button type="button" variant="secondary" onClick={onDone}>
-              Cancel
+              {t("records.cancel")}
             </Button>
             <Button type="submit" loading={busy}>
-              {isEdit ? "Save" : "Create"}
+              {isEdit ? t("records.save") : t("records.create")}
             </Button>
           </div>
         </div>
@@ -612,6 +615,7 @@ function DeleteButton({
   recordId: string;
   onDone: () => void;
 }) {
+  const { t } = useLang();
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -626,7 +630,7 @@ function DeleteButton({
       );
       onDone();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to delete");
+      setError(e instanceof Error ? e.message : t("records.deleteFailed"));
       setConfirming(false);
     } finally {
       setBusy(false);
@@ -637,14 +641,14 @@ function DeleteButton({
     return (
       <span className="inline-flex items-center gap-1">
         <Button variant="danger" onClick={remove} loading={busy}>
-          Confirm
+          {t("records.confirm")}
         </Button>
         <Button
           variant="secondary"
           onClick={() => setConfirming(false)}
           disabled={busy}
         >
-          Cancel
+          {t("records.cancel")}
         </Button>
         {error && <span className="text-xs text-red-600">{error}</span>}
       </span>
@@ -653,7 +657,7 @@ function DeleteButton({
 
   return (
     <Button variant="danger" onClick={() => setConfirming(true)}>
-      Delete
+      {t("records.delete")}
     </Button>
   );
 }

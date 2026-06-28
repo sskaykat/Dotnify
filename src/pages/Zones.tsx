@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { apiFetch } from "@/lib/api";
 import { useFetch } from "@/hooks/useFetch";
+import { useLang } from "@/lib/i18n";
 import type { Provider, Zone, ZoneWithProvider } from "@/lib/types";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
@@ -15,6 +16,7 @@ interface ZonesResponse {
 }
 
 export function Zones() {
+  const { t } = useLang();
   const { data, loading, error, isValidating, refetch } = useFetch<ZonesResponse>("/api/zones");
   const zones = data?.zones ?? [];
   const providerErrors = data?.errors ?? [];
@@ -24,18 +26,18 @@ export function Zones() {
     <div className="mx-auto max-w-4xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">Domains</h1>
-          <p className="mt-0.5 text-sm text-slate-500">All domains from every configured provider.</p>
+          <h1 className="text-xl font-semibold text-slate-900">{t("zones.title")}</h1>
+          <p className="mt-0.5 text-sm text-slate-500">{t("zones.subtitle")}</p>
         </div>
         <div className="flex items-center gap-3">
           {isValidating && !loading && (
             <span className="flex items-center gap-1.5 text-xs text-slate-400">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-500" />
-              Updating
+              {t("zones.updating")}
             </span>
           )}
           <Button onClick={() => setShowForm((v) => !v)} variant={showForm ? "secondary" : "primary"}>
-            {showForm ? "Cancel" : "Add domain"}
+            {showForm ? t("zones.cancel") : t("zones.addDomain")}
           </Button>
         </div>
       </div>
@@ -58,13 +60,13 @@ export function Zones() {
       ) : error ? (
         <Card>
           <p className="text-sm text-red-600">{error}</p>
-          <Button variant="secondary" className="mt-3" onClick={() => void refetch()}>Retry</Button>
+          <Button variant="secondary" className="mt-3" onClick={() => void refetch()}>{t("zones.retry")}</Button>
         </Card>
       ) : zones.length === 0 ? (
         <EmptyState
-          title="No domains yet"
-          description="Add a provider and select its domains to see them here."
-          action={<Link to="/providers"><Button>Go to providers</Button></Link>}
+          title={t("zones.noDomains")}
+          description={t("zones.noDomainsDesc")}
+          action={<Link to="/providers"><Button>{t("zones.goToProviders")}</Button></Link>}
         />
       ) : (
         <ul className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -76,7 +78,7 @@ export function Zones() {
 
       {providerErrors.length > 0 && (
         <Card>
-          <p className="text-sm font-medium text-slate-700">Some providers failed to load:</p>
+          <p className="text-sm font-medium text-slate-700">{t("zones.providersFailed")}</p>
           <ul className="mt-2 space-y-1">
             {providerErrors.map((e) => (
               <li key={e.providerId} className="text-xs text-red-600">
@@ -91,6 +93,7 @@ export function Zones() {
 }
 
 function AddDomainForm({ managedZones, onSaved, onCancel }: { managedZones: ZoneWithProvider[]; onSaved: () => void; onCancel: () => void }) {
+  const { t } = useLang();
   const { data: providers } = useFetch<Provider[]>("/api/providers");
   const [providerId, setProviderId] = useState("");
   const [step, setStep] = useState<"select-provider" | "select-zones">("select-provider");
@@ -150,9 +153,9 @@ function AddDomainForm({ managedZones, onSaved, onCancel }: { managedZones: Zone
 
   if (step === "select-zones") {
     return (
-      <Card title="Select domains" description={`Choose which domains to manage for ${selectedProvider?.name ?? "this provider"}.`}>
+      <Card title={t("zones.selectDomains")} description={t("zones.selectDomainsDesc", { provider: selectedProvider?.name ?? "this provider" })}>
         {unmanagedZones.length === 0 ? (
-          <p className="text-sm text-slate-500">All zones from this provider are already managed.</p>
+          <p className="text-sm text-slate-500">{t("zones.allManaged")}</p>
         ) : (
           <ul className="max-h-72 space-y-1 overflow-y-auto">
             {unmanagedZones.map((z) => (
@@ -173,9 +176,9 @@ function AddDomainForm({ managedZones, onSaved, onCancel }: { managedZones: Zone
         )}
         {error && <p className="mt-3 text-xs text-red-600">{error}</p>}
         <div className="mt-4 flex justify-end gap-2">
-          <Button variant="secondary" onClick={() => { setStep("select-provider"); setError(null); }} disabled={busy}>Back</Button>
+          <Button variant="secondary" onClick={() => { setStep("select-provider"); setError(null); }} disabled={busy}>{t("zones.back")}</Button>
           <Button onClick={save} loading={busy} disabled={selected.size === 0}>
-            {selected.size === 0 ? "Select domains to add" : `Add ${selected.size} domain${selected.size > 1 ? "s" : ""}`}
+            {selected.size === 0 ? t("zones.selectToAdd") : t("zones.addCount", { count: selected.size })}
           </Button>
         </div>
       </Card>
@@ -183,12 +186,12 @@ function AddDomainForm({ managedZones, onSaved, onCancel }: { managedZones: Zone
   }
 
   return (
-    <Card title="Add domain" description="Select an existing provider to manage additional domains.">
+    <Card title={t("zones.addDomainTitle")} description={t("zones.addDomainDesc")}>
       {!providers || providers.length === 0 ? (
-        <p className="text-sm text-slate-500">No providers configured yet. Add one on the Providers page first.</p>
+        <p className="text-sm text-slate-500">{t("zones.noProviders")}</p>
       ) : (
         <div className="flex flex-col gap-3">
-          <label className="text-sm font-medium text-slate-700">Provider</label>
+          <label className="text-sm font-medium text-slate-700">{t("zones.provider")}</label>
           <ul className="space-y-1">
             {providers.map((p) => (
               <li key={p.id}>
@@ -204,7 +207,7 @@ function AddDomainForm({ managedZones, onSaved, onCancel }: { managedZones: Zone
                     {p.type}
                   </span>
                   <span className="ml-auto text-xs text-slate-400">
-                    {p.selectedZones.length === 0 ? "all zones" : `${p.selectedZones.length} zone${p.selectedZones.length > 1 ? "s" : ""}`}
+                    {p.selectedZones.length === 0 ? t("zones.allZones") : t("zones.zoneCount", { count: p.selectedZones.length })}
                   </span>
                 </button>
               </li>
@@ -214,13 +217,14 @@ function AddDomainForm({ managedZones, onSaved, onCancel }: { managedZones: Zone
       )}
       {error && <p className="mt-3 text-xs text-red-600">{error}</p>}
       <div className="mt-4 flex justify-end gap-2">
-        <Button variant="secondary" onClick={onCancel} disabled={busy}>Cancel</Button>
+        <Button variant="secondary" onClick={onCancel} disabled={busy}>{t("zones.cancel")}</Button>
       </div>
     </Card>
   );
 }
 
 function ZoneRow({ zone, allZones, onRemoved }: { zone: ZoneWithProvider; allZones: ZoneWithProvider[]; onRemoved: () => void }) {
+  const { t } = useLang();
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -261,7 +265,7 @@ function ZoneRow({ zone, allZones, onRemoved }: { zone: ZoneWithProvider; allZon
             }`}>
               {zone.status}
             </span>
-            <span className="text-sm text-brand-600">View records →</span>
+            <span className="text-sm text-brand-600">{t("zones.viewRecords")}</span>
           </span>
         </Link>
         {confirming ? (
@@ -271,14 +275,14 @@ function ZoneRow({ zone, allZones, onRemoved }: { zone: ZoneWithProvider; allZon
               disabled={busy}
               className="rounded-md bg-red-600 px-2 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
             >
-              Confirm
+              {t("zones.confirm")}
             </button>
             <button
               onClick={() => setConfirming(false)}
               disabled={busy}
               className="rounded-md px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-50"
             >
-              Cancel
+              {t("zones.cancel")}
             </button>
           </div>
         ) : (
@@ -286,7 +290,7 @@ function ZoneRow({ zone, allZones, onRemoved }: { zone: ZoneWithProvider; allZon
             onClick={() => setConfirming(true)}
             className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
           >
-            Delete
+            {t("zones.delete")}
           </button>
         )}
       </div>

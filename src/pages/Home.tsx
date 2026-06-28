@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useFetch } from "@/hooks/useFetch";
+import { useLang } from "@/lib/i18n";
 import type { ZoneWithProvider, Provider } from "@/lib/types";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
@@ -11,6 +12,7 @@ interface ZonesResponse {
 }
 
 export function Home() {
+  const { t } = useLang();
   const { data } = useFetch<ZonesResponse>("/api/zones");
   const { data: providers } = useFetch<Provider[]>("/api/providers");
   const zones = data?.zones ?? [];
@@ -19,32 +21,32 @@ export function Home() {
   return (
     <div className="mx-auto max-w-4xl space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">dotnify</h1>
+        <h1 className="text-2xl font-bold text-slate-900">{t("home.title")}</h1>
         <p className="mt-1 text-sm text-slate-500">
-          Manage DNS records across Cloudflare and Huawei Cloud from one place.
+          {t("home.subtitle")}
         </p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>
           <p className="text-3xl font-semibold text-slate-900">{providerCount}</p>
-          <p className="mt-1 text-sm text-slate-500">Providers</p>
+          <p className="mt-1 text-sm text-slate-500">{t("home.providers")}</p>
         </Card>
         <Card>
           <p className="text-3xl font-semibold text-slate-900">{zones.length}</p>
-          <p className="mt-1 text-sm text-slate-500">Domains</p>
+          <p className="mt-1 text-sm text-slate-500">{t("home.domains")}</p>
         </Card>
         <Card>
           <p className="text-3xl font-semibold text-slate-900">
             {zones.filter((z) => z.status === "active").length}
           </p>
-          <p className="mt-1 text-sm text-slate-500">Active</p>
+          <p className="mt-1 text-sm text-slate-500">{t("home.active")}</p>
         </Card>
       </div>
 
       {zones.length > 0 ? (
         <div>
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-400">Domains</h2>
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-400">{t("home.domains")}</h2>
           <ul className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
             {zones.slice(0, 10).map((z) => (
               <li key={`${z.providerId}:${z.id}`} className="border-b border-slate-100 last:border-b-0">
@@ -67,7 +69,7 @@ export function Home() {
           </ul>
           {zones.length > 10 && (
             <Link to="/domains" className="mt-2 block text-center text-sm text-brand-600 hover:underline">
-              View all {zones.length} domains
+              {t("home.viewAllDomains", { count: zones.length })}
             </Link>
           )}
         </div>
@@ -79,13 +81,15 @@ export function Home() {
 }
 
 function EmptyOrNewState({ providerCount }: { providerCount: number }) {
+  const { t } = useLang();
+
   if (providerCount === 0) {
     return (
       <Card>
         <div className="py-4 text-center">
-          <p className="text-sm text-slate-500">Get started by adding your first DNS provider.</p>
+          <p className="text-sm text-slate-500">{t("home.getStarted")}</p>
           <Link to="/providers" className="mt-3 inline-block">
-            <Button>Add provider</Button>
+            <Button>{t("home.addProvider")}</Button>
           </Link>
         </div>
       </Card>
@@ -94,9 +98,9 @@ function EmptyOrNewState({ providerCount }: { providerCount: number }) {
   return (
     <Card>
       <div className="py-4 text-center">
-        <p className="text-sm text-slate-500">No domains configured yet. Select zones from your providers.</p>
+        <p className="text-sm text-slate-500">{t("home.noDomains")}</p>
         <Link to="/providers" className="mt-3 inline-block">
-          <Button variant="secondary">Manage providers</Button>
+          <Button variant="secondary">{t("home.manageProviders")}</Button>
         </Link>
       </div>
     </Card>

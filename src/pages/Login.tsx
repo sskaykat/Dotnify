@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useLang } from "@/lib/i18n";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { Card } from "@/components/Card";
 
 export function Login() {
   const { login } = useAuth();
+  const { t } = useLang();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -29,10 +31,10 @@ export function Login() {
 
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6">
-      <Card title="Sign in" description="Enter your admin credentials to manage DNS records.">
+      <Card title={t("login.title")} description={t("login.description")}>
         <form onSubmit={submit} className="flex flex-col gap-4">
           <Input
-            label="Username"
+            label={t("login.username")}
             name="username"
             autoComplete="username"
             value={username}
@@ -40,7 +42,7 @@ export function Login() {
             required
           />
           <Input
-            label="Password"
+            label={t("login.password")}
             name="password"
             type="password"
             autoComplete="current-password"
@@ -50,7 +52,7 @@ export function Login() {
             error={error}
           />
           <Button type="submit" loading={busy}>
-            Sign in
+            {t("login.signIn")}
           </Button>
         </form>
       </Card>

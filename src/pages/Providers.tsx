@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { useFetch } from "@/hooks/useFetch";
+import { useLang } from "@/lib/i18n";
 import type { Provider, ProviderType, Zone } from "@/lib/types";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
@@ -21,6 +22,7 @@ const HW_REGIONS = [
 ];
 
 export function Providers() {
+  const { t } = useLang();
   const { data: providers, loading, error, refetch } = useFetch<Provider[]>("/api/providers");
   const [showForm, setShowForm] = useState(false);
 
@@ -28,11 +30,11 @@ export function Providers() {
     <div className="mx-auto max-w-4xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">DNS Providers</h1>
-          <p className="mt-0.5 text-sm text-slate-500">Manage the API credentials used to access your DNS zones.</p>
+          <h1 className="text-xl font-semibold text-slate-900">{t("providers.title")}</h1>
+          <p className="mt-0.5 text-sm text-slate-500">{t("providers.subtitle")}</p>
         </div>
         <Button onClick={() => setShowForm((v) => !v)} variant={showForm ? "secondary" : "primary"}>
-          {showForm ? "Cancel" : "Add provider"}
+          {showForm ? t("providers.cancel") : t("providers.addProvider")}
         </Button>
       </div>
 
@@ -46,9 +48,9 @@ export function Providers() {
         </Card>
       ) : !providers || providers.length === 0 ? (
         <EmptyState
-          title="No providers yet"
-          description="Add a DNS provider to start managing its DNS records."
-          action={<Button onClick={() => setShowForm(true)}>Add your first provider</Button>}
+          title={t("providers.noProviders")}
+          description={t("providers.noProvidersDesc")}
+          action={<Button onClick={() => setShowForm(true)}>{t("providers.addFirst")}</Button>}
         />
       ) : (
         <ul className="space-y-3">
@@ -62,6 +64,7 @@ export function Providers() {
 }
 
 function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => void }) {
+  const { t } = useLang();
   const [providerType, setProviderType] = useState<ProviderType>("cloudflare");
   const [name, setName] = useState("");
   const [apiKey, setApiKey] = useState("");
@@ -79,16 +82,16 @@ function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => v
     e.preventDefault();
     setError(null);
     if (!name.trim()) {
-      setError("Name is required");
+      setError(t("providers.nameRequired"));
       return;
     }
     if (providerType === "cloudflare" && !apiKey.trim()) {
-      setError("API token is required");
+      setError(t("providers.apiTokenRequired"));
       return;
     }
     if (providerType === "huawei") {
       if (!apiAccessKey.trim() || !apiSecretKey.trim()) {
-        setError("Access Key ID and Secret Access Key are required");
+        setError(t("providers.akSkRequired"));
         return;
       }
     }
@@ -111,7 +114,7 @@ function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => v
       setSelected(new Set());
       setStep("select");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Verification failed");
+      setError(e instanceof Error ? e.message : t("providers.verificationFailed"));
     } finally {
       setBusy(false);
     }
@@ -149,7 +152,7 @@ function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => v
       });
       onSaved();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to save provider");
+      setError(e instanceof Error ? e.message : t("providers.saveFailed"));
     } finally {
       setBusy(false);
     }
@@ -157,9 +160,9 @@ function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => v
 
   if (step === "select") {
     return (
-      <Card title="Select zones" description="Pick which domains to manage. Leave all unchecked to manage every accessible zone.">
+      <Card title={t("providers.selectZones")} description={t("providers.selectZonesDesc")}>
         {zones.length === 0 ? (
-          <p className="text-sm text-slate-500">No zones accessible with these credentials.</p>
+          <p className="text-sm text-slate-500">{t("providers.noAccessibleZones")}</p>
         ) : (
           <ul className="max-h-72 space-y-1 overflow-y-auto">
             {zones.map((z) => (
@@ -180,9 +183,9 @@ function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => v
         )}
         {error && <p className="mt-3 text-xs text-red-600">{error}</p>}
         <div className="mt-4 flex justify-end gap-2">
-          <Button variant="secondary" onClick={() => { setStep("input"); setError(null); }} disabled={busy}>Back</Button>
+          <Button variant="secondary" onClick={() => { setStep("input"); setError(null); }} disabled={busy}>{t("zones.back")}</Button>
           <Button onClick={save} loading={busy}>
-            {selected.size === 0 ? "Save (all zones)" : `Save (${selected.size} zone${selected.size > 1 ? "s" : ""})`}
+            {selected.size === 0 ? t("providers.saveAllZones") : t("providers.saveCount", { count: selected.size })}
           </Button>
         </div>
       </Card>
@@ -193,26 +196,26 @@ function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => v
     <Card title={providerType === "huawei" ? "Add Huawei Cloud provider" : "Add Cloudflare provider"}>
       <form onSubmit={verifyAndFetchZones} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-slate-700">Provider type</label>
+          <label className="text-sm font-medium text-slate-700">{t("providers.providerType")}</label>
           <div className="flex gap-2">
-            {(["cloudflare", "huawei"] as ProviderType[]).map((t) => (
+            {(["cloudflare", "huawei"] as ProviderType[]).map((pt) => (
               <button
-                key={t}
+                key={pt}
                 type="button"
-                onClick={() => setProviderType(t)}
+                onClick={() => setProviderType(pt)}
                 className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
-                  providerType === t
+                  providerType === pt
                     ? "border-brand-500 bg-brand-50 text-brand-700"
                     : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
                 }`}
               >
-                {t === "cloudflare" ? "Cloudflare" : "Huawei Cloud"}
+                {pt === "cloudflare" ? "Cloudflare" : "Huawei Cloud"}
               </button>
             ))}
           </div>
         </div>
         <Input
-          label="Display name"
+          label={t("providers.displayName")}
           name="name"
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -222,7 +225,7 @@ function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => v
         />
         {providerType === "cloudflare" ? (
           <Input
-            label="API token"
+            label={t("providers.apiToken")}
             name="apiKey"
             type="password"
             value={apiKey}
@@ -235,7 +238,7 @@ function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => v
         ) : (
           <>
             <Input
-              label="Access Key ID"
+              label={t("providers.accessKeyId")}
               name="apiAccessKey"
               type="password"
               value={apiAccessKey}
@@ -245,7 +248,7 @@ function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => v
               hint="Your Huawei Cloud access key ID."
             />
             <Input
-              label="Secret Access Key"
+              label={t("providers.secretAccessKey")}
               name="apiSecretKey"
               type="password"
               value={apiSecretKey}
@@ -255,27 +258,27 @@ function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => v
               hint="Your Huawei Cloud secret access key."
             />
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-slate-700">Region</label>
+              <label className="text-sm font-medium text-slate-700">{t("providers.region")}</label>
               <select
                 value={region}
                 onChange={(e) => setRegion(e.target.value)}
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
               >
-                <option value="">Default (Global)</option>
+                <option value="">{t("providers.regionDefault")}</option>
                 {HW_REGIONS.map((r) => (
                   <option key={r.value} value={r.value}>
                     {r.label} ({r.value})
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-slate-400">Huawei Cloud DNS is a global service — usually no region selection is needed.</p>
+              <p className="text-xs text-slate-400">{t("providers.regionHint")}</p>
             </div>
             {error && <p className="text-xs text-red-600">{error}</p>}
           </>
         )}
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onCancel} disabled={busy}>Cancel</Button>
-          <Button type="submit" loading={busy}>Verify & continue</Button>
+          <Button type="button" variant="secondary" onClick={onCancel} disabled={busy}>{t("providers.cancel")}</Button>
+          <Button type="submit" loading={busy}>{t("providers.verifyContinue")}</Button>
         </div>
       </form>
     </Card>
@@ -283,6 +286,7 @@ function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => v
 }
 
 function ProviderRow({ provider, onChanged }: { provider: Provider; onChanged: () => void }) {
+  const { t } = useLang();
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -295,7 +299,7 @@ function ProviderRow({ provider, onChanged }: { provider: Provider; onChanged: (
       await apiFetch(`/api/providers/${provider.id}`, { method: "DELETE" });
       onChanged();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to delete provider");
+      setError(e instanceof Error ? e.message : t("providers.deleteFailed"));
       setConfirming(false);
     } finally {
       setBusy(false);
@@ -330,27 +334,27 @@ function ProviderRow({ provider, onChanged }: { provider: Provider; onChanged: (
             <dl className="mt-1 flex flex-wrap gap-x-6 gap-y-0.5 text-xs text-slate-500">
               {provider.type === "cloudflare" ? (
                 <div>
-                  <dt className="inline">Token:</dt>{" "}
+                  <dt className="inline">{t("providers.token")}:</dt>{" "}
                   <dd className="inline font-mono text-slate-700">{provider.apiKey}</dd>
                 </div>
               ) : (
                 <>
                   <div>
-                    <dt className="inline">AK:</dt>{" "}
+                    <dt className="inline">{t("providers.ak")}:</dt>{" "}
                     <dd className="inline font-mono text-slate-700">{provider.apiAccessKey}</dd>
                   </div>
                   <div>
-                    <dt className="inline">Region:</dt>{" "}
+                    <dt className="inline">{t("providers.region")}:</dt>{" "}
                     <dd className="inline text-slate-700">{provider.region}</dd>
                   </div>
                 </>
               )}
               <div>
-                <dt className="inline">Zones:</dt>{" "}
-                <dd className="inline text-slate-700">{zoneCount === 0 ? "all" : zoneCount}</dd>
+                <dt className="inline">{t("providers.zones")}:</dt>{" "}
+                <dd className="inline text-slate-700">{zoneCount === 0 ? t("providers.all") : zoneCount}</dd>
               </div>
               <div>
-                <dt className="inline">Added:</dt>{" "}
+                <dt className="inline">{t("providers.added")}:</dt>{" "}
                 <dd className="inline">{new Date(provider.createdAt).toLocaleDateString()}</dd>
               </div>
             </dl>
@@ -358,20 +362,20 @@ function ProviderRow({ provider, onChanged }: { provider: Provider; onChanged: (
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <Button variant="secondary" onClick={() => setEditing(true)} disabled={confirming}>
-              Edit
+              {t("providers.edit")}
             </Button>
             {confirming ? (
               <>
                 <Button variant="danger" onClick={remove} loading={busy}>
-                  Confirm delete
+                  {t("providers.confirmDelete")}
                 </Button>
                 <Button variant="ghost" onClick={() => setConfirming(false)} disabled={busy}>
-                  Cancel
+                  {t("providers.cancel")}
                 </Button>
               </>
             ) : (
               <Button variant="ghost" onClick={() => setConfirming(true)} disabled={busy} className="text-red-600 hover:bg-red-50">
-                Delete
+                {t("providers.delete")}
               </Button>
             )}
           </div>
@@ -382,6 +386,7 @@ function ProviderRow({ provider, onChanged }: { provider: Provider; onChanged: (
 }
 
 function EditProviderForm({ provider, onSaved, onCancel }: { provider: Provider; onSaved: () => void; onCancel: () => void }) {
+  const { t } = useLang();
   const [name, setName] = useState(provider.name);
   const [apiKey, setApiKey] = useState("");
   const [apiAccessKey, setApiAccessKey] = useState("");
@@ -394,7 +399,7 @@ function EditProviderForm({ provider, onSaved, onCancel }: { provider: Provider;
     e.preventDefault();
     setError(null);
     if (!name.trim()) {
-      setError("Name is required");
+      setError(t("providers.nameRequired"));
       return;
     }
     setBusy(true);
@@ -414,17 +419,17 @@ function EditProviderForm({ provider, onSaved, onCancel }: { provider: Provider;
       });
       onSaved();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to update provider");
+      setError(e instanceof Error ? e.message : t("providers.updateFailed"));
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <Card title={`Edit ${provider.name}`}>
+    <Card title={t("providers.editTitle", { name: provider.name })}>
       <form onSubmit={save} className="flex flex-col gap-4">
         <Input
-          label="Display name"
+          label={t("providers.displayName")}
           name="name"
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -433,39 +438,39 @@ function EditProviderForm({ provider, onSaved, onCancel }: { provider: Provider;
         />
         {provider.type === "cloudflare" ? (
           <Input
-            label="API token"
+            label={t("providers.apiToken")}
             name="apiKey"
             type="password"
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
-            placeholder="Leave blank to keep current token"
+            placeholder={t("providers.leaveBlankToken")}
           />
         ) : (
           <>
             <Input
-              label="Access Key ID"
+              label={t("providers.accessKeyId")}
               name="apiAccessKey"
               type="password"
               value={apiAccessKey}
               onChange={(e) => setApiAccessKey(e.target.value)}
-              placeholder="Leave blank to keep current key"
+              placeholder={t("providers.leaveBlankKey")}
             />
             <Input
-              label="Secret Access Key"
+              label={t("providers.secretAccessKey")}
               name="apiSecretKey"
               type="password"
               value={apiSecretKey}
               onChange={(e) => setApiSecretKey(e.target.value)}
-              placeholder="Leave blank to keep current key"
+              placeholder={t("providers.leaveBlankKey")}
             />
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-slate-700">Region</label>
+              <label className="text-sm font-medium text-slate-700">{t("providers.region")}</label>
               <select
                 value={region}
                 onChange={(e) => setRegion(e.target.value)}
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
               >
-                <option value="">Default (Global)</option>
+                <option value="">{t("providers.regionDefault")}</option>
                 {HW_REGIONS.map((r) => (
                   <option key={r.value} value={r.value}>
                     {r.label} ({r.value})
@@ -477,8 +482,8 @@ function EditProviderForm({ provider, onSaved, onCancel }: { provider: Provider;
         )}
         {error && <p className="text-xs text-red-600">{error}</p>}
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onCancel} disabled={busy}>Cancel</Button>
-          <Button type="submit" loading={busy}>Save</Button>
+          <Button type="button" variant="secondary" onClick={onCancel} disabled={busy}>{t("providers.cancel")}</Button>
+          <Button type="submit" loading={busy}>{t("providers.save")}</Button>
         </div>
       </form>
     </Card>
