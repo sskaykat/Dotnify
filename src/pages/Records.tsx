@@ -9,7 +9,7 @@ import { Input } from "@/components/Input";
 import { Toggle } from "@/components/Toggle";
 import { SkeletonRow } from "@/components/Skeleton";
 import { EmptyState } from "@/components/EmptyState";
-import hwLineData from "../../huawei_line.json";
+import hwLineData from "@/huawei_line.json";
 
 const RECORD_TYPES: RecordType[] = [
   "A",

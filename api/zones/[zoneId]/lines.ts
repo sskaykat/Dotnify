@@ -20,7 +20,7 @@ let cachedLines: { line: string; name: string; parent: string | null }[] | null 
 
 function getLines(): { line: string; name: string; parent: string | null }[] {
   if (cachedLines) return cachedLines;
-  const filePath = join(process.cwd(), "huawei_line.json");
+  const filePath = join(process.cwd(), "src/huawei_line.json");
   const raw = JSON.parse(readFileSync(filePath, "utf-8")) as Record<string, LineEntry>;
   cachedLines = Object.entries(raw).map(([id, entry]) => ({
     line: id,

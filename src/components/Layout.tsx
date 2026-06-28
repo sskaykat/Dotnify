@@ -29,7 +29,7 @@ export function Layout() {
     <div className="flex min-h-screen flex-col">
       <header className="flex h-14 items-center justify-between border-b border-slate-200 bg-white px-6">
         <Link to="/" className="flex items-center gap-2 font-semibold text-slate-900">
-          <span className="grid h-7 w-7 place-items-center rounded-md bg-brand-600 text-white">d</span>
+          <img src="/favicon.png" alt="dotnify" className="h-7 w-7" />
           dotnify
         </Link>
         {authenticated && (
