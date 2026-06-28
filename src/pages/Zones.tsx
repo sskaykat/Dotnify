@@ -69,26 +69,7 @@ export function Zones() {
       ) : (
         <ul className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           {zones.map((z) => (
-            <li key={`${z.providerId}:${z.id}`} className="border-b border-slate-100 last:border-b-0">
-              <Link
-                to={`/domains/${z.id}/records?providerId=${z.providerId}&providerType=${z.providerType}&zoneName=${encodeURIComponent(z.name)}`}
-                className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-slate-50"
-              >
-                <ProviderLogo type={z.providerType} />
-                <span className="font-mono text-sm text-slate-900">{z.name}</span>
-                <span className="text-xs text-slate-400">{z.providerName}</span>
-                <span className="ml-auto flex items-center gap-3">
-                  <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${
-                    z.status === "active"
-                      ? "bg-green-50 text-green-700"
-                      : "bg-slate-100 text-slate-600"
-                  }`}>
-                    {z.status}
-                  </span>
-                  <span className="text-sm text-brand-600">View records →</span>
-                </span>
-              </Link>
-            </li>
+            <ZoneRow key={`${z.providerId}:${z.id}`} zone={z} allZones={zones} onRemoved={() => void refetch()} />
           ))}
         </ul>
       )}
@@ -236,5 +217,79 @@ function AddDomainForm({ managedZones, onSaved, onCancel }: { managedZones: Zone
         <Button variant="secondary" onClick={onCancel} disabled={busy}>Cancel</Button>
       </div>
     </Card>
+  );
+}
+
+function ZoneRow({ zone, allZones, onRemoved }: { zone: ZoneWithProvider; allZones: ZoneWithProvider[]; onRemoved: () => void }) {
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  async function remove() {
+    setBusy(true);
+    try {
+      // Collect all managed zone IDs for this provider, minus the one being removed
+      const remaining = allZones
+        .filter((z) => z.providerId === zone.providerId && z.id !== zone.id)
+        .map((z) => z.id);
+      await apiFetch(`/api/providers/${zone.providerId}`, {
+        method: "PATCH",
+        body: { selectedZones: remaining },
+      });
+      onRemoved();
+    } catch {
+      setConfirming(false);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <li className="border-b border-slate-100 last:border-b-0">
+      <div className="flex items-center gap-3 px-5 py-3">
+        <Link
+          to={`/domains/${zone.id}/records?providerId=${zone.providerId}&providerType=${zone.providerType}&zoneName=${encodeURIComponent(zone.name)}`}
+          className="flex min-w-0 flex-1 items-center gap-3 transition-colors hover:bg-slate-50 -mx-5 -my-3 px-5 py-3"
+        >
+          <ProviderLogo type={zone.providerType} />
+          <span className="font-mono text-sm text-slate-900">{zone.name}</span>
+          <span className="text-xs text-slate-400">{zone.providerName}</span>
+          <span className="ml-auto flex items-center gap-3">
+            <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${
+              zone.status === "active"
+                ? "bg-green-50 text-green-700"
+                : "bg-slate-100 text-slate-600"
+            }`}>
+              {zone.status}
+            </span>
+            <span className="text-sm text-brand-600">View records →</span>
+          </span>
+        </Link>
+        {confirming ? (
+          <div className="flex shrink-0 items-center gap-1.5">
+            <button
+              onClick={remove}
+              disabled={busy}
+              className="rounded-md bg-red-600 px-2 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
+            >
+              Confirm
+            </button>
+            <button
+              onClick={() => setConfirming(false)}
+              disabled={busy}
+              className="rounded-md px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-50"
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setConfirming(true)}
+            className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+          >
+            Delete
+          </button>
+        )}
+      </div>
+    </li>
   );
 }
