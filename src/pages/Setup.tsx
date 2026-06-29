@@ -45,7 +45,7 @@ export function Setup() {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6">
+    <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 bg-slate-50 dark:bg-slate-900">
       <Card title={t("setup.title")} description={t("setup.description")}>
         <form onSubmit={submit} className="flex flex-col gap-4">
           <Input

@@ -26,12 +26,12 @@ export function Zones() {
     <div className="mx-auto max-w-4xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">{t("zones.title")}</h1>
-          <p className="mt-0.5 text-sm text-slate-500">{t("zones.subtitle")}</p>
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{t("zones.title")}</h1>
+          <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{t("zones.subtitle")}</p>
         </div>
         <div className="flex items-center gap-3">
           {isValidating && !loading && (
-            <span className="flex items-center gap-1.5 text-xs text-slate-400">
+            <span className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-500" />
               {t("zones.updating")}
             </span>
@@ -45,9 +45,9 @@ export function Zones() {
       {showForm && <AddDomainForm managedZones={zones} onSaved={() => { setShowForm(false); void refetch(); }} onCancel={() => setShowForm(false)} />}
 
       {loading ? (
-        <ul className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <ul className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
           {Array.from({ length: 5 }).map((_, i) => (
-            <li key={i} className="border-b border-slate-100 last:border-b-0 px-5 py-3">
+            <li key={i} className="border-b border-slate-100 last:border-b-0 px-5 py-3 dark:border-slate-700">
               <div className="flex items-center gap-3">
                 <Skeleton className="h-5 w-5 rounded" />
                 <Skeleton className="h-4 w-40" />
@@ -69,7 +69,7 @@ export function Zones() {
           action={<Link to="/providers"><Button>{t("zones.goToProviders")}</Button></Link>}
         />
       ) : (
-        <ul className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <ul className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
           {zones.map((z) => (
             <ZoneRow key={`${z.providerId}:${z.id}`} zone={z} allZones={zones} onRemoved={() => void refetch()} />
           ))}
@@ -78,7 +78,7 @@ export function Zones() {
 
       {providerErrors.length > 0 && (
         <Card>
-          <p className="text-sm font-medium text-slate-700">{t("zones.providersFailed")}</p>
+          <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{t("zones.providersFailed")}</p>
           <ul className="mt-2 space-y-1">
             {providerErrors.map((e) => (
               <li key={e.providerId} className="text-xs text-red-600">
@@ -155,20 +155,20 @@ function AddDomainForm({ managedZones, onSaved, onCancel }: { managedZones: Zone
     return (
       <Card title={t("zones.selectDomains")} description={t("zones.selectDomainsDesc", { provider: selectedProvider?.name ?? "this provider" })}>
         {unmanagedZones.length === 0 ? (
-          <p className="text-sm text-slate-500">{t("zones.allManaged")}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{t("zones.allManaged")}</p>
         ) : (
           <ul className="max-h-72 space-y-1 overflow-y-auto">
             {unmanagedZones.map((z) => (
               <li key={z.id}>
-                <label className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-slate-50">
+                <label className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-700">
                   <input
                     type="checkbox"
                     checked={selected.has(z.id)}
                     onChange={() => toggleZone(z.id)}
-                    className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                    className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 dark:border-slate-600"
                   />
-                  <span className="font-mono text-sm text-slate-900">{z.name}</span>
-                  <span className="ml-auto text-xs text-slate-400">{z.status}</span>
+                  <span className="font-mono text-sm text-slate-900 dark:text-slate-100">{z.name}</span>
+                  <span className="ml-auto text-xs text-slate-400 dark:text-slate-500">{z.status}</span>
                 </label>
               </li>
             ))}
@@ -188,10 +188,10 @@ function AddDomainForm({ managedZones, onSaved, onCancel }: { managedZones: Zone
   return (
     <Card title={t("zones.addDomainTitle")} description={t("zones.addDomainDesc")}>
       {!providers || providers.length === 0 ? (
-        <p className="text-sm text-slate-500">{t("zones.noProviders")}</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">{t("zones.noProviders")}</p>
       ) : (
         <div className="flex flex-col gap-3">
-          <label className="text-sm font-medium text-slate-700">{t("zones.provider")}</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t("zones.provider")}</label>
           <ul className="space-y-1">
             {providers.map((p) => (
               <li key={p.id}>
@@ -199,14 +199,14 @@ function AddDomainForm({ managedZones, onSaved, onCancel }: { managedZones: Zone
                   type="button"
                   onClick={() => void selectProvider(p.id)}
                   disabled={busy}
-                  className="flex w-full items-center gap-3 rounded-lg border border-slate-200 px-4 py-3 text-left transition-colors hover:bg-slate-50 disabled:opacity-50"
+                  className="flex w-full items-center gap-3 rounded-lg border border-slate-200 px-4 py-3 text-left transition-colors hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:hover:bg-slate-700"
                 >
                   <ProviderLogo type={p.type} />
-                  <span className="text-sm font-medium text-slate-900">{p.name}</span>
-                  <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium uppercase text-slate-600">
+                  <span className="text-sm font-medium text-slate-900 dark:text-slate-100">{p.name}</span>
+                  <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium uppercase text-slate-600 dark:bg-slate-700 dark:text-slate-300">
                     {p.type}
                   </span>
-                  <span className="ml-auto text-xs text-slate-400">
+                  <span className="ml-auto text-xs text-slate-400 dark:text-slate-500">
                     {p.selectedZones.length === 0 ? t("zones.allZones") : t("zones.zoneCount", { count: p.selectedZones.length })}
                   </span>
                 </button>
@@ -248,24 +248,24 @@ function ZoneRow({ zone, allZones, onRemoved }: { zone: ZoneWithProvider; allZon
   }
 
   return (
-    <li className="border-b border-slate-100 last:border-b-0">
+    <li className="border-b border-slate-100 last:border-b-0 dark:border-slate-700">
       <div className="flex items-center gap-3 px-5 py-3">
         <Link
           to={`/domains/${zone.id}/records?providerId=${zone.providerId}&providerType=${zone.providerType}&zoneName=${encodeURIComponent(zone.name)}`}
-          className="flex min-w-0 flex-1 items-center gap-3 transition-colors hover:bg-slate-50 -mx-5 -my-3 px-5 py-3"
+          className="flex min-w-0 flex-1 items-center gap-3 transition-colors hover:bg-slate-50 -mx-5 -my-3 px-5 py-3 dark:hover:bg-slate-700"
         >
           <ProviderLogo type={zone.providerType} />
-          <span className="font-mono text-sm text-slate-900">{zone.name}</span>
-          <span className="text-xs text-slate-400">{zone.providerName}</span>
+          <span className="font-mono text-sm text-slate-900 dark:text-slate-100">{zone.name}</span>
+          <span className="text-xs text-slate-400 dark:text-slate-500">{zone.providerName}</span>
           <span className="ml-auto flex items-center gap-3">
             <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${
               zone.status === "active"
-                ? "bg-green-50 text-green-700"
-                : "bg-slate-100 text-slate-600"
+                ? "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                : "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300"
             }`}>
               {zone.status}
             </span>
-            <span className="text-sm text-brand-600">{t("zones.viewRecords")}</span>
+            <span className="text-sm text-brand-600 dark:text-brand-400">{t("zones.viewRecords")}</span>
           </span>
         </Link>
         {confirming ? (
@@ -280,7 +280,7 @@ function ZoneRow({ zone, allZones, onRemoved }: { zone: ZoneWithProvider; allZon
             <button
               onClick={() => setConfirming(false)}
               disabled={busy}
-              className="rounded-md px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-50"
+              className="rounded-md px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-50 dark:text-slate-300 dark:hover:bg-slate-700"
             >
               {t("zones.cancel")}
             </button>
@@ -288,7 +288,7 @@ function ZoneRow({ zone, allZones, onRemoved }: { zone: ZoneWithProvider; allZon
         ) : (
           <button
             onClick={() => setConfirming(true)}
-            className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+            className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
           >
             {t("zones.delete")}
           </button>

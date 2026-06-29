@@ -21,45 +21,42 @@ export function Home() {
   return (
     <div className="mx-auto max-w-4xl space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">{t("home.title")}</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          {t("home.subtitle")}
-        </p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{t("home.title")}</h1>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>
-          <p className="text-3xl font-semibold text-slate-900">{providerCount}</p>
-          <p className="mt-1 text-sm text-slate-500">{t("home.providers")}</p>
+          <p className="text-3xl font-semibold text-slate-900 dark:text-slate-100">{providerCount}</p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t("home.providers")}</p>
         </Card>
         <Card>
-          <p className="text-3xl font-semibold text-slate-900">{zones.length}</p>
-          <p className="mt-1 text-sm text-slate-500">{t("home.domains")}</p>
+          <p className="text-3xl font-semibold text-slate-900 dark:text-slate-100">{zones.length}</p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t("home.domains")}</p>
         </Card>
         <Card>
-          <p className="text-3xl font-semibold text-slate-900">
+          <p className="text-3xl font-semibold text-slate-900 dark:text-slate-100">
             {zones.filter((z) => z.status === "active").length}
           </p>
-          <p className="mt-1 text-sm text-slate-500">{t("home.active")}</p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t("home.active")}</p>
         </Card>
       </div>
 
       {zones.length > 0 ? (
         <div>
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-400">{t("home.domains")}</h2>
-          <ul className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">{t("home.domains")}</h2>
+          <ul className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
             {zones.slice(0, 10).map((z) => (
-              <li key={`${z.providerId}:${z.id}`} className="border-b border-slate-100 last:border-b-0">
+              <li key={`${z.providerId}:${z.id}`} className="border-b border-slate-100 last:border-b-0 dark:border-slate-700">
                 <Link
                   to={`/domains/${z.id}/records?providerId=${z.providerId}&providerType=${z.providerType}&zoneName=${encodeURIComponent(z.name)}`}
-                  className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-slate-50"
+                  className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-slate-50 dark:hover:bg-slate-700"
                 >
                   <ProviderLogo type={z.providerType} />
-                  <span className="font-mono text-sm text-slate-900">{z.name}</span>
+                  <span className="font-mono text-sm text-slate-900 dark:text-slate-100">{z.name}</span>
                   <span className={`ml-auto rounded-md px-2 py-0.5 text-xs font-medium ${
                     z.status === "active"
-                      ? "bg-green-50 text-green-700"
-                      : "bg-slate-100 text-slate-600"
+                      ? "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                      : "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300"
                   }`}>
                     {z.status}
                   </span>
@@ -68,7 +65,7 @@ export function Home() {
             ))}
           </ul>
           {zones.length > 10 && (
-            <Link to="/domains" className="mt-2 block text-center text-sm text-brand-600 hover:underline">
+            <Link to="/domains" className="mt-2 block text-center text-sm text-brand-600 hover:underline dark:text-brand-400">
               {t("home.viewAllDomains", { count: zones.length })}
             </Link>
           )}
@@ -87,7 +84,7 @@ function EmptyOrNewState({ providerCount }: { providerCount: number }) {
     return (
       <Card>
         <div className="py-4 text-center">
-          <p className="text-sm text-slate-500">{t("home.getStarted")}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{t("home.getStarted")}</p>
           <Link to="/providers" className="mt-3 inline-block">
             <Button>{t("home.addProvider")}</Button>
           </Link>
@@ -98,7 +95,7 @@ function EmptyOrNewState({ providerCount }: { providerCount: number }) {
   return (
     <Card>
       <div className="py-4 text-center">
-        <p className="text-sm text-slate-500">{t("home.noDomains")}</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">{t("home.noDomains")}</p>
         <Link to="/providers" className="mt-3 inline-block">
           <Button variant="secondary">{t("home.manageProviders")}</Button>
         </Link>

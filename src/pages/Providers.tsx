@@ -30,8 +30,8 @@ export function Providers() {
     <div className="mx-auto max-w-4xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">{t("providers.title")}</h1>
-          <p className="mt-0.5 text-sm text-slate-500">{t("providers.subtitle")}</p>
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{t("providers.title")}</h1>
+          <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{t("providers.subtitle")}</p>
         </div>
         <Button onClick={() => setShowForm((v) => !v)} variant={showForm ? "secondary" : "primary"}>
           {showForm ? t("providers.cancel") : t("providers.addProvider")}
@@ -162,20 +162,20 @@ function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => v
     return (
       <Card title={t("providers.selectZones")} description={t("providers.selectZonesDesc")}>
         {zones.length === 0 ? (
-          <p className="text-sm text-slate-500">{t("providers.noAccessibleZones")}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{t("providers.noAccessibleZones")}</p>
         ) : (
           <ul className="max-h-72 space-y-1 overflow-y-auto">
             {zones.map((z) => (
               <li key={z.id}>
-                <label className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-slate-50">
+                <label className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-700">
                   <input
                     type="checkbox"
                     checked={selected.has(z.id)}
                     onChange={() => toggleZone(z.id)}
-                    className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                    className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 dark:border-slate-600"
                   />
-                  <span className="font-mono text-sm text-slate-900">{z.name}</span>
-                  <span className="ml-auto text-xs text-slate-400">{z.status}</span>
+                  <span className="font-mono text-sm text-slate-900 dark:text-slate-100">{z.name}</span>
+                  <span className="ml-auto text-xs text-slate-400 dark:text-slate-500">{z.status}</span>
                 </label>
               </li>
             ))}
@@ -196,7 +196,7 @@ function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => v
     <Card title={providerType === "huawei" ? "Add Huawei Cloud provider" : "Add Cloudflare provider"}>
       <form onSubmit={verifyAndFetchZones} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-slate-700">{t("providers.providerType")}</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t("providers.providerType")}</label>
           <div className="flex gap-2">
             {(["cloudflare", "huawei"] as ProviderType[]).map((pt) => (
               <button
@@ -205,8 +205,8 @@ function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => v
                 onClick={() => setProviderType(pt)}
                 className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
                   providerType === pt
-                    ? "border-brand-500 bg-brand-50 text-brand-700"
-                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                    ? "border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-900/30 dark:text-brand-400 dark:border-brand-400"
+                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-slate-500"
                 }`}
               >
                 {pt === "cloudflare" ? "Cloudflare" : "Huawei Cloud"}
@@ -258,11 +258,11 @@ function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => v
               hint="Your Huawei Cloud secret access key."
             />
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-slate-700">{t("providers.region")}</label>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t("providers.region")}</label>
               <select
                 value={region}
                 onChange={(e) => setRegion(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
               >
                 <option value="">{t("providers.regionDefault")}</option>
                 {HW_REGIONS.map((r) => (
@@ -271,7 +271,7 @@ function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => v
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-slate-400">{t("providers.regionHint")}</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">{t("providers.regionHint")}</p>
             </div>
             {error && <p className="text-xs text-red-600">{error}</p>}
           </>
@@ -326,32 +326,32 @@ function ProviderRow({ provider, onChanged }: { provider: Provider; onChanged: (
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium uppercase text-slate-600">
+              <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium uppercase text-slate-600 dark:bg-slate-700 dark:text-slate-300">
                 {provider.type}
               </span>
-              <h3 className="truncate text-sm font-semibold text-slate-900">{provider.name}</h3>
+              <h3 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{provider.name}</h3>
             </div>
-            <dl className="mt-1 flex flex-wrap gap-x-6 gap-y-0.5 text-xs text-slate-500">
+            <dl className="mt-1 flex flex-wrap gap-x-6 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
               {provider.type === "cloudflare" ? (
                 <div>
                   <dt className="inline">{t("providers.token")}:</dt>{" "}
-                  <dd className="inline font-mono text-slate-700">{provider.apiKey}</dd>
+                  <dd className="inline font-mono text-slate-700 dark:text-slate-300">{provider.apiKey}</dd>
                 </div>
               ) : (
                 <>
                   <div>
                     <dt className="inline">{t("providers.ak")}:</dt>{" "}
-                    <dd className="inline font-mono text-slate-700">{provider.apiAccessKey}</dd>
+                    <dd className="inline font-mono text-slate-700 dark:text-slate-300">{provider.apiAccessKey}</dd>
                   </div>
                   <div>
                     <dt className="inline">{t("providers.region")}:</dt>{" "}
-                    <dd className="inline text-slate-700">{provider.region}</dd>
+                    <dd className="inline text-slate-700 dark:text-slate-300">{provider.region}</dd>
                   </div>
                 </>
               )}
               <div>
                 <dt className="inline">{t("providers.zones")}:</dt>{" "}
-                <dd className="inline text-slate-700">{zoneCount === 0 ? t("providers.all") : zoneCount}</dd>
+                <dd className="inline text-slate-700 dark:text-slate-300">{zoneCount === 0 ? t("providers.all") : zoneCount}</dd>
               </div>
               <div>
                 <dt className="inline">{t("providers.added")}:</dt>{" "}
@@ -374,7 +374,7 @@ function ProviderRow({ provider, onChanged }: { provider: Provider; onChanged: (
                 </Button>
               </>
             ) : (
-              <Button variant="ghost" onClick={() => setConfirming(true)} disabled={busy} className="text-red-600 hover:bg-red-50">
+              <Button variant="ghost" onClick={() => setConfirming(true)} disabled={busy} className="text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30">
                 {t("providers.delete")}
               </Button>
             )}
@@ -464,11 +464,11 @@ function EditProviderForm({ provider, onSaved, onCancel }: { provider: Provider;
               placeholder={t("providers.leaveBlankKey")}
             />
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-slate-700">{t("providers.region")}</label>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t("providers.region")}</label>
               <select
                 value={region}
                 onChange={(e) => setRegion(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
               >
                 <option value="">{t("providers.regionDefault")}</option>
                 {HW_REGIONS.map((r) => (

@@ -4,7 +4,7 @@
 
 # dotnify
 
-English|[简体中文](./README.zh-CN.md)
+English | [简体中文](./README.zh-CN.md)
 
 **A unified DNS management tool that aggregates domains from multiple DNS providers into a single interface.**
 

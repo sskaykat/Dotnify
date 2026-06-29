@@ -30,7 +30,7 @@ export function Login() {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6">
+    <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 bg-slate-50 dark:bg-slate-900">
       <Card title={t("login.title")} description={t("login.description")}>
         <form onSubmit={submit} className="flex flex-col gap-4">
           <Input

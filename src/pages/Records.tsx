@@ -168,16 +168,16 @@ export function Records() {
           <Link to="/domains" className="text-sm text-brand-600 hover:underline">
             {t("records.backToDomains")}
           </Link>
-          <h1 className="mt-1 text-xl font-semibold text-slate-900">
+          <h1 className="mt-1 text-xl font-semibold text-slate-900 dark:text-slate-100">
             {t("records.dnsRecords")}
           </h1>
-          <p className="mt-0.5 text-sm text-slate-500">
-            {t("records.zone")} <span className="font-mono text-slate-700">{zoneId}</span>
+          <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+            {t("records.zone")} <span className="font-mono text-slate-700 dark:text-slate-300">{zoneId}</span>
           </p>
         </div>
         <div className="flex items-center gap-3">
           {isValidating && !loading && (
-            <span className="flex items-center gap-1.5 text-xs text-slate-400">
+            <span className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-500" />
               {t("records.updating")}
             </span>
@@ -226,7 +226,7 @@ export function Records() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase text-slate-500">
+                <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
                   <th className="px-4 py-2 font-medium">{t("records.type")}</th>
                   <th className="px-4 py-2 font-medium">{t("records.name")}</th>
                   <th className="px-4 py-2 font-medium">{t("records.content")}</th>
@@ -265,7 +265,7 @@ export function Records() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase text-slate-500">
+                <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
                   <th className="px-4 py-2 font-medium">{t("records.type")}</th>
                   <th className="px-4 py-2 font-medium">{t("records.name")}</th>
                   <th className="px-4 py-2 font-medium">{t("records.content")}</th>
@@ -279,34 +279,34 @@ export function Records() {
                 {records.map((r) => (
                   <tr
                     key={r.id}
-                    className="border-b border-slate-100 last:border-b-0 align-top"
+                    className="border-b border-slate-100 last:border-b-0 align-top dark:border-slate-700"
                   >
                     <td className="px-4 py-2">
-                      <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-700">
+                      <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-700 dark:bg-slate-700 dark:text-slate-300">
                         {r.type}
                       </span>
                     </td>
-                    <td className="px-4 py-2 font-mono text-slate-900">
+                    <td className="px-4 py-2 font-mono text-slate-900 dark:text-slate-100">
                       {r.name}
                     </td>
-                    <td className="px-4 py-2 font-mono text-slate-700 break-all">
+                    <td className="px-4 py-2 font-mono text-slate-700 break-all dark:text-slate-300">
                       {r.content}
                       {r.priority !== undefined && r.priority !== null && (
-                        <span className="ml-1 text-xs text-slate-400">
+                        <span className="ml-1 text-xs text-slate-400 dark:text-slate-500">
                           (pri {r.priority})
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-2 text-slate-600">
+                    <td className="px-4 py-2 text-slate-600 dark:text-slate-300">
                       {showProxied && r.ttl === 1 ? t("records.auto") : r.ttl}
                     </td>
                     {showLine && (
-                      <td className="px-4 py-2 text-slate-600">
+                      <td className="px-4 py-2 text-slate-600 dark:text-slate-300">
                         {getLineName(r.line)}
                       </td>
                     )}
                     {showProxied && (
-                      <td className="px-4 py-2 text-slate-600">
+                      <td className="px-4 py-2 text-slate-600 dark:text-slate-300">
                         {r.proxied ? t("records.yes") : t("records.no")}
                       </td>
                     )}
@@ -448,11 +448,11 @@ function RecordForm({
     <Card title={isEdit ? t("records.editRecord") : t("records.createRecord")}>
       <form onSubmit={submit} className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-slate-700">{t("records.type")}</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t("records.type")}</label>
           <select
             value={type}
             onChange={(e) => setType(e.target.value as RecordType)}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
           >
             {RECORD_TYPES.map((rt) => (
               <option key={rt} value={rt}>
@@ -493,7 +493,7 @@ function RecordForm({
         />
         {showLine && (
           <div className="flex flex-col gap-1 md:col-span-2">
-            <label className="text-sm font-medium text-slate-700">{t("records.line")}</label>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t("records.line")}</label>
             <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
               {/* Level 1: Category */}
               <select
@@ -504,7 +504,7 @@ function RecordForm({
                   setLineL3("");
                   setLineL4("");
                 }}
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
               >
                 <option value="default">{t("records.default")}</option>
                 <option value="carrier">{t("records.carrier")}</option>
@@ -520,7 +520,7 @@ function RecordForm({
                   setLineL4("");
                 }}
                 disabled={lineCategory === "default"}
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 disabled:bg-slate-100 disabled:text-slate-400"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 disabled:bg-slate-100 disabled:text-slate-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:disabled:bg-slate-700 dark:disabled:text-slate-500"
               >
                 <option value="">
                   {lineCategory === "default" ? t("records.default") : t("records.selectDot")}
@@ -538,7 +538,7 @@ function RecordForm({
                   setLineL4("");
                 }}
                 disabled={lineCategory === "default" || l3Options.length === 0}
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 disabled:bg-slate-100 disabled:text-slate-400"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 disabled:bg-slate-100 disabled:text-slate-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:disabled:bg-slate-700 dark:disabled:text-slate-500"
               >
                 <option value="">
                   {lineCategory === "default" ? t("records.default") : l3Options.length === 0 ? t("records.default") : t("records.selectDot")}
@@ -553,7 +553,7 @@ function RecordForm({
                 value={lineL4}
                 onChange={(e) => setLineL4(e.target.value)}
                 disabled={lineCategory !== "carrier" || l4Options.length === 0}
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 disabled:bg-slate-100 disabled:text-slate-400"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 disabled:bg-slate-100 disabled:text-slate-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:disabled:bg-slate-700 dark:disabled:text-slate-500"
               >
                 <option value="">
                   {lineCategory !== "carrier" ? t("records.default") : l4Options.length === 0 ? t("records.default") : t("records.selectDot")}

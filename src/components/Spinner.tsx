@@ -6,7 +6,7 @@ interface SpinnerProps {
 
 export function Spinner({ size = 20, className = "", label = "Loading" }: SpinnerProps) {
   return (
-    <span className={`inline-flex items-center gap-2 text-slate-500 ${className}`} role="status">
+    <span className={`inline-flex items-center gap-2 text-slate-500 dark:text-slate-400 ${className}`} role="status">
       <svg
         className="animate-spin"
         width={size}

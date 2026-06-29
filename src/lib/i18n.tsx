@@ -155,6 +155,11 @@ const translations: Record<Lang, Record<string, string>> = {
     "records.proxiedHint": "Cloudflare orange-cloud",
     "records.save": "Save",
     "records.create": "Create",
+
+    // Theme
+    "theme.system": "System",
+    "theme.light": "Light",
+    "theme.dark": "Dark",
   },
 
   "zh-CN": {
@@ -307,6 +312,11 @@ const translations: Record<Lang, Record<string, string>> = {
     "records.proxiedHint": "Cloudflare 橙云代理",
     "records.save": "保存",
     "records.create": "创建",
+
+    // Theme
+    "theme.system": "跟随系统",
+    "theme.light": "浅色",
+    "theme.dark": "深色",
   },
 };
 

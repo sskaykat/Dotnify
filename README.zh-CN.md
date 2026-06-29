@@ -4,7 +4,7 @@
 
 # dotnify
 
-[English](./README.md)|简体中文
+[English](./README.md) | 简体中文
 
 **一个 DNS 统一管理工具，把多个 DNS 供应商的域名聚合到同一个界面里。**
 
