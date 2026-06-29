@@ -1,4 +1,4 @@
-import type { ApiRequest } from "./types";
+import type { ApiRequest } from "./types.js";
 
 /**
  * Get the parsed JSON body of a Vercel function request. Vercel auto-parses

@@ -1,11 +1,11 @@
-import { requireAuth } from "../_lib/middleware";
-import { redis, KEYS } from "../_lib/redis";
-import { ok, error, notFound } from "../_lib/response";
-import { getBody, queryStr } from "../_lib/http";
-import { cfFetch } from "../_lib/cloudflare";
-import { listZones as hwListZones } from "../_lib/huawei";
-import type { ApiResponse, Provider } from "../_lib/types";
-import type { AuthedRequest } from "../_lib/middleware";
+import { requireAuth } from "../_lib/middleware.js";
+import { redis, KEYS } from "../_lib/redis.js";
+import { ok, error, notFound } from "../_lib/response.js";
+import { getBody, queryStr } from "../_lib/http.js";
+import { cfFetch } from "../_lib/cloudflare.js";
+import { listZones as hwListZones } from "../_lib/huawei.js";
+import type { ApiResponse, Provider } from "../_lib/types.js";
+import type { AuthedRequest } from "../_lib/middleware.js";
 
 async function loadProviders(): Promise<Provider[]> {
   const raw = (await redis.get<Provider[]>(KEYS.providers)) ?? [];

@@ -1,4 +1,4 @@
-import type { CloudflareResponse } from "./types";
+import type { CloudflareResponse } from "./types.js";
 
 const CF_BASE = "https://api.cloudflare.com/client/v4";
 

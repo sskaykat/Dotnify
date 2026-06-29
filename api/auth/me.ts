@@ -1,6 +1,6 @@
-import { getAdmin, extractBearerToken, getSession } from "../_lib/auth";
-import { ok } from "../_lib/response";
-import type { ApiRequest, ApiResponse } from "../_lib/types";
+import { getAdmin, extractBearerToken, getSession } from "../_lib/auth.js";
+import { ok } from "../_lib/response.js";
+import type { ApiRequest, ApiResponse } from "../_lib/types.js";
 
 /**
  * GET /api/auth/me

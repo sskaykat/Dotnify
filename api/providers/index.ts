@@ -1,12 +1,12 @@
 import { randomBytes } from "node:crypto";
-import { requireAuth } from "../_lib/middleware";
-import { redis, KEYS } from "../_lib/redis";
-import { ok, error } from "../_lib/response";
-import { cfFetch } from "../_lib/cloudflare";
-import { listZones as hwListZones } from "../_lib/huawei";
-import type { ApiResponse, Provider } from "../_lib/types";
-import type { AuthedRequest } from "../_lib/middleware";
-import { getBody } from "../_lib/http";
+import { requireAuth } from "../_lib/middleware.js";
+import { redis, KEYS } from "../_lib/redis.js";
+import { ok, error } from "../_lib/response.js";
+import { cfFetch } from "../_lib/cloudflare.js";
+import { listZones as hwListZones } from "../_lib/huawei.js";
+import type { ApiResponse, Provider } from "../_lib/types.js";
+import type { AuthedRequest } from "../_lib/middleware.js";
+import { getBody } from "../_lib/http.js";
 
 interface CfZone {
   id: string;

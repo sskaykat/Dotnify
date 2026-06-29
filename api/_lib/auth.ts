@@ -1,7 +1,7 @@
 import { randomBytes, scrypt as scryptCb, timingSafeEqual } from "node:crypto";
 import { promisify } from "node:util";
-import { redis, KEYS } from "./redis";
-import type { Admin, Session } from "./types";
+import { redis, KEYS } from "./redis.js";
+import type { Admin, Session } from "./types.js";
 
 const scrypt = promisify(scryptCb) as (
   password: string | Buffer,

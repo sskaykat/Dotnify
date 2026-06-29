@@ -1,4 +1,4 @@
-import type { ApiResponse } from "./types";
+import type { ApiResponse } from "./types.js";
 
 /**
  * Thin helpers around the response object so every API route returns a consistent

@@ -1,9 +1,9 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { requireAuth } from "../../_lib/middleware";
-import { ok, error } from "../../_lib/response";
-import type { ApiResponse } from "../../_lib/types";
-import type { AuthedRequest } from "../../_lib/middleware";
+import { requireAuth } from "../../_lib/middleware.js";
+import { ok, error } from "../../_lib/response.js";
+import type { ApiResponse } from "../../_lib/types.js";
+import type { AuthedRequest } from "../../_lib/middleware.js";
 
 /**
  * GET /api/zones/:zoneId/lines

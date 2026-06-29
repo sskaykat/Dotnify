@@ -1,16 +1,16 @@
-import { requireAuth } from "../../../_lib/middleware";
-import { redis, KEYS } from "../../../_lib/redis";
-import { ok, error, notFound } from "../../../_lib/response";
-import { getBody, queryStr } from "../../../_lib/http";
-import { cfFetch } from "../../../_lib/cloudflare";
+import { requireAuth } from "../../../_lib/middleware.js";
+import { redis, KEYS } from "../../../_lib/redis.js";
+import { ok, error, notFound } from "../../../_lib/response.js";
+import { getBody, queryStr } from "../../../_lib/http.js";
+import { cfFetch } from "../../../_lib/cloudflare.js";
 import {
   updateRecordSet as hwUpdateRecordSet,
   deleteRecordSet as hwDeleteRecordSet,
   listRecordSets,
   stripHost,
-} from "../../../_lib/huawei";
-import type { ApiResponse, Provider, DnsRecord } from "../../../_lib/types";
-import type { AuthedRequest } from "../../../_lib/middleware";
+} from "../../../_lib/huawei.js";
+import type { ApiResponse, Provider, DnsRecord } from "../../../_lib/types.js";
+import type { AuthedRequest } from "../../../_lib/middleware.js";
 
 async function findProvider(providerId: string | undefined): Promise<Provider | null> {
   if (!providerId) return null;

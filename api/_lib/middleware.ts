@@ -1,6 +1,6 @@
-import { getSession, extractBearerToken } from "./auth";
-import { unauthorized } from "./response";
-import type { ApiRequest, ApiResponse, Session } from "./types";
+import { getSession, extractBearerToken } from "./auth.js";
+import { unauthorized } from "./response.js";
+import type { ApiRequest, ApiResponse, Session } from "./types.js";
 
 type AuthedHandler = (req: AuthedRequest, res: ApiResponse) => unknown | Promise<unknown>;
 type AnyHandler = (req: ApiRequest, res: ApiResponse) => unknown | Promise<unknown>;

@@ -1,6 +1,6 @@
-import { getAdmin, hashPassword, setAdmin } from "../_lib/auth";
-import { error, ok } from "../_lib/response";
-import type { ApiRequest, ApiResponse, Admin } from "../_lib/types";
+import { getAdmin, hashPassword, setAdmin } from "../_lib/auth.js";
+import { error, ok } from "../_lib/response.js";
+import type { ApiRequest, ApiResponse, Admin } from "../_lib/types.js";
 
 /**
  * POST /api/auth/setup
