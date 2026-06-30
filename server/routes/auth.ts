@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { getAdmin, extractBearerToken, getSession, createSession, verifyPassword, destroySession, hashPassword, setAdmin } from "../lib/auth.js";
 import { ok, error, unauthorized } from "../lib/response.js";
+import { rateLimit } from "../lib/rate-limit.js";
 import type { Admin } from "../lib/types.js";
 
 const auth = new Hono();
@@ -35,12 +36,16 @@ auth.get("/me", async (c) => {
   });
 });
 
+// A dummy scrypt hash used to ensure verifyPassword always runs, even when
+// the username doesn't match, preventing timing-based username enumeration.
+const DUMMY_HASH = "scrypt:00000000000000000000000000000000:0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+
 /**
  * POST /api/auth/login
  * Body: { username, password }
  * Returns: { token, username }
  */
-auth.post("/login", async (c) => {
+auth.post("/login", rateLimit, async (c) => {
   const body = await c.req.json<{ username?: string; password?: string }>();
   const username = body.username?.trim();
   const password = body.password ?? "";
@@ -50,16 +55,15 @@ auth.post("/login", async (c) => {
   }
 
   const admin = await getAdmin();
-  if (!admin) {
-    return unauthorized(c, "Admin not initialized");
-  }
+  // Always run verifyPassword to prevent timing-based username enumeration.
+  // If admin doesn't exist or username doesn't match, verify against a dummy hash.
+  const hashToVerify = admin && admin.username === username
+    ? admin.passwordHash
+    : DUMMY_HASH;
 
-  if (admin.username !== username) {
-    return unauthorized(c, "Invalid credentials");
-  }
+  const valid = await verifyPassword(password, hashToVerify);
 
-  const valid = await verifyPassword(password, admin.passwordHash);
-  if (!valid) {
+  if (!admin || admin.username !== username || !valid) {
     return unauthorized(c, "Invalid credentials");
   }
 
@@ -84,7 +88,7 @@ auth.post("/logout", async (c) => {
  * First-time admin creation. Only available when no admin exists yet.
  * Body: { username, password }
  */
-auth.post("/setup", async (c) => {
+auth.post("/setup", rateLimit, async (c) => {
   const existing = await getAdmin();
   if (existing) {
     return error(c, "Admin already initialized", 409);

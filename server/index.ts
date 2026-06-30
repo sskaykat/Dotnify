@@ -1,9 +1,23 @@
 import { Hono } from "hono";
+import { bodyLimit } from "hono/body-limit";
 import auth from "./routes/auth.js";
 import providers from "./routes/providers.js";
 import zones from "./routes/zones.js";
 
 const app = new Hono();
+
+// Security headers
+app.use("/*", async (c, next) => {
+  await next();
+  c.header("X-Content-Type-Options", "nosniff");
+  c.header("X-Frame-Options", "DENY");
+  c.header("X-XSS-Protection", "0");
+  c.header("Referrer-Policy", "strict-origin-when-cross-origin");
+  c.header("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+});
+
+// Limit request body size to 1 MB for API routes
+app.use("/api/*", bodyLimit({ maxSize: 1024 * 1024, onError: (c) => c.json({ ok: false, error: "Request body too large" }, 413) }));
 
 // Global error handler
 app.onError((err, c) => {

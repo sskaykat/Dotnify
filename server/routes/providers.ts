@@ -78,25 +78,23 @@ providers.post("/", async (c) => {
   if (type === "cloudflare") {
     if (!apiKey) return error(c, "API key is required");
 
-    // Verify the token by calling Cloudflare's token-verify endpoint.
     try {
       await cfFetch<{ id: string; status: string }>(apiKey, "/user/tokens/verify");
-    } catch (e) {
-      return error(c, `Cloudflare token verification failed: ${e instanceof Error ? e.message : "unknown error"}`, 422);
+    } catch {
+      return error(c, "Cloudflare token verification failed", 422);
     }
 
-    // Validate selectedZones against the token's accessible zones (if any were picked).
     if (selectedZones.length > 0) {
       let accessible: CfZone[] = [];
       try {
         accessible = await cfFetch<CfZone[]>(apiKey, "/zones", { query: { per_page: 50 } });
-      } catch (e) {
-        return error(c, `Failed to fetch zones for validation: ${e instanceof Error ? e.message : "unknown error"}`, 502);
+      } catch {
+        return error(c, "Failed to fetch zones for validation", 502);
       }
       const validIds = new Set(accessible.map((z) => z.id));
       const invalid = selectedZones.filter((id) => !validIds.has(id));
       if (invalid.length > 0) {
-        return error(c, `Some selected zones are not accessible with this token: ${invalid.join(", ")}`, 422);
+        return error(c, "Some selected zones are not accessible with this token", 422);
       }
     }
   } else {
@@ -104,19 +102,17 @@ providers.post("/", async (c) => {
     if (!apiAccessKey) return error(c, "Access Key ID is required");
     if (!apiSecretKey) return error(c, "Secret Access Key is required");
 
-    // Verify by listing zones (will throw on auth failure).
     try {
       const zones = await hwListZones(apiAccessKey, apiSecretKey, region || undefined);
-      // Validate selectedZones
       if (selectedZones.length > 0) {
         const validIds = new Set(zones.map((z) => z.id));
         const invalid = selectedZones.filter((id) => !validIds.has(id));
         if (invalid.length > 0) {
-          return error(c, `Some selected zones are not accessible: ${invalid.join(", ")}`, 422);
+          return error(c, "Some selected zones are not accessible", 422);
         }
       }
-    } catch (e) {
-      return error(c, `Huawei Cloud verification failed: ${e instanceof Error ? e.message : "unknown error"}`, 422);
+    } catch {
+      return error(c, "Huawei Cloud verification failed", 422);
     }
   }
 
@@ -163,8 +159,8 @@ providers.post("/verify", async (c) => {
 
     try {
       await cfFetch<{ id: string; status: string }>(apiKey, "/user/tokens/verify");
-    } catch (e) {
-      return error(c, `Cloudflare token verification failed: ${e instanceof Error ? e.message : "unknown error"}`, 422);
+    } catch {
+      return error(c, "Cloudflare token verification failed", 422);
     }
 
     try {
@@ -175,8 +171,8 @@ providers.post("/verify", async (c) => {
         status: z.status,
       }));
       return ok(c, zones);
-    } catch (e) {
-      return error(c, `Failed to fetch zones: ${e instanceof Error ? e.message : "unknown error"}`, 502);
+    } catch {
+      return error(c, "Failed to fetch zones", 502);
     }
   }
 
@@ -187,8 +183,8 @@ providers.post("/verify", async (c) => {
     try {
       const zones = await hwListZones(apiAccessKey, apiSecretKey, region || undefined);
       return ok(c, zones);
-    } catch (e) {
-      return error(c, `Huawei Cloud verification failed: ${e instanceof Error ? e.message : "unknown error"}`, 422);
+    } catch {
+      return error(c, "Huawei Cloud verification failed", 422);
     }
   }
 
@@ -233,8 +229,8 @@ providers.patch("/:id", async (c) => {
     if (newKey && newKey !== provider.apiKey) {
       try {
         await cfFetch<{ id: string; status: string }>(newKey, "/user/tokens/verify");
-      } catch (e) {
-        return error(c, `Cloudflare token verification failed: ${e instanceof Error ? e.message : "unknown error"}`, 422);
+      } catch {
+        return error(c, "Cloudflare token verification failed", 422);
       }
       provider.apiKey = newKey;
     }
@@ -253,8 +249,8 @@ providers.patch("/:id", async (c) => {
       const reg = newRegion || provider.region;
       try {
         await hwListZones(ak, sk, reg || undefined);
-      } catch (e) {
-        return error(c, `Huawei Cloud verification failed: ${e instanceof Error ? e.message : "unknown error"}`, 422);
+      } catch {
+        return error(c, "Huawei Cloud verification failed", 422);
       }
       if (newAk) provider.apiAccessKey = newAk;
       if (newSk) provider.apiSecretKey = newSk;
@@ -321,8 +317,8 @@ providers.get("/:id/zones", async (c) => {
     }
 
     return error(c, `Unsupported provider type: ${provider.type}`, 400);
-  } catch (e) {
-    return error(c, `Failed to fetch zones: ${e instanceof Error ? e.message : "unknown error"}`, 502);
+  } catch {
+    return error(c, "Failed to fetch zones", 502);
   }
 });
 

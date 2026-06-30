@@ -75,11 +75,11 @@ zones.get("/", async (c) => {
             providerType: p.type,
           });
         }
-      } catch (e) {
+      } catch {
         errors.push({
           providerId: p.id,
           providerName: p.name,
-          message: e instanceof Error ? e.message : "unknown error",
+          message: "Failed to fetch zones",
         });
       }
     })
@@ -178,8 +178,8 @@ zones.get("/:zoneId/records", async (c) => {
     }
 
     return error(c, `Unsupported provider type: ${provider.type}`, 400);
-  } catch (e) {
-    return error(c, `Failed to fetch records: ${e instanceof Error ? e.message : "unknown error"}`, 502);
+  } catch {
+    return error(c, "Failed to fetch records", 502);
   }
 });
 
@@ -219,7 +219,6 @@ zones.post("/:zoneId/records", async (c) => {
     }
 
     if (provider.type === "huawei") {
-      // Huawei Cloud RecordSet: records is an array of strings
       const records = body.content.includes(", ")
         ? body.content.split(", ")
         : [body.content];
@@ -241,8 +240,8 @@ zones.post("/:zoneId/records", async (c) => {
     }
 
     return error(c, `Unsupported provider type: ${provider.type}`, 400);
-  } catch (e) {
-    return error(c, `Failed to create record: ${e instanceof Error ? e.message : "unknown error"}`, 502);
+  } catch {
+    return error(c, "Failed to create record", 502);
   }
 });
 
@@ -287,8 +286,6 @@ zones.patch("/:zoneId/records/:recordId", async (c) => {
       const sk = provider.apiSecretKey ?? "";
       const reg = provider.region;
 
-      // Huawei Cloud UpdateRecordSet requires the full records array.
-      // Fetch the current recordset to get the existing records, then apply changes.
       const existingSets = await listRecordSets(ak, sk, reg, zoneId);
       const existing = existingSets.find((rs) => rs.id === recordId);
       if (!existing) return notFound(c, "Record not found");
@@ -308,8 +305,8 @@ zones.patch("/:zoneId/records/:recordId", async (c) => {
     }
 
     return error(c, `Unsupported provider type: ${provider.type}`, 400);
-  } catch (e) {
-    return error(c, `Failed to update record: ${e instanceof Error ? e.message : "unknown error"}`, 502);
+  } catch {
+    return error(c, "Failed to update record", 502);
   }
 });
 
@@ -345,8 +342,8 @@ zones.delete("/:zoneId/records/:recordId", async (c) => {
     }
 
     return error(c, `Unsupported provider type: ${provider.type}`, 400);
-  } catch (e) {
-    return error(c, `Failed to delete record: ${e instanceof Error ? e.message : "unknown error"}`, 502);
+  } catch {
+    return error(c, "Failed to delete record", 502);
   }
 });
 
