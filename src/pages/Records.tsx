@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { apiFetch } from "@/lib/api";
 import { useFetch } from "@/hooks/useFetch";
@@ -28,6 +28,28 @@ const RECORD_TYPES: RecordType[] = [
   "URI",
 ];
 const TYPES_WITH_PRIORITY: ReadonlySet<RecordType> = new Set(["MX", "SRV"]);
+
+// Content format validation
+const IPV4_RE = /^(\d{1,3}\.){3}\d{1,3}$/;
+const IPV6_RE = /^[0-9a-fA-F:]+$/;
+const DOMAIN_RE = /^([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)*[a-zA-Z]{2,}$/;
+
+function validateContent(type: RecordType, content: string): string | null {
+  if (!content) return null;
+  if (type === "A" && !IPV4_RE.test(content)) return "records.invalidIpv4";
+  if (type === "AAAA" && !IPV6_RE.test(content)) return "records.invalidIpv6";
+  if (type === "CNAME" && !DOMAIN_RE.test(content) && content !== "@") return "records.invalidCname";
+  return null;
+}
+
+const CONTENT_PLACEHOLDER: Partial<Record<RecordType, string>> = {
+  A: "e.g. 192.0.2.1",
+  AAAA: "e.g. 2001:db8::1",
+  CNAME: "e.g. example.com",
+  TXT: "e.g. v=spf1 include:...",
+  MX: "e.g. mail.example.com",
+  NS: "e.g. ns1.example.com",
+};
 
 // ---------------------------------------------------------------------------
 // Huawei Cloud line data (loaded from local JSON, not API)
@@ -444,11 +466,43 @@ function RecordForm({
 
   const showPriority = TYPES_WITH_PRIORITY.has(type);
 
+  // Content validation hint
+  const contentError = useMemo(() => {
+    const key = validateContent(type, content);
+    return key ? t(key) : null;
+  }, [type, content, t]);
+
+  // Unsaved changes tracking
+  const dirty = useRef(false);
+  const trackDirty = useCallback(() => { dirty.current = true; }, []);
+
+  // beforeunload guard
+  useEffect(() => {
+    function handler(e: BeforeUnloadEvent) {
+      if (dirty.current) {
+        e.preventDefault();
+      }
+    }
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, []);
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     if (!name || content === "") {
       setError(t("records.nameContentRequired"));
+      return;
+    }
+    // Content format validation
+    const contentKey = validateContent(type, content);
+    if (contentKey) {
+      setError(t(contentKey));
+      return;
+    }
+    // Priority required for MX/SRV
+    if (showPriority && priority === "") {
+      setError(t("records.priorityRequired"));
       return;
     }
     setBusy(true);
@@ -467,12 +521,19 @@ function RecordForm({
       } else {
         await apiFetch(`${base}${query}`, { method: "POST", body });
       }
+      dirty.current = false;
       onDone();
     } catch (e) {
       setError(e instanceof Error ? e.message : t("records.saveFailed"));
     } finally {
       setBusy(false);
     }
+  }
+
+  function handleCancel() {
+    if (dirty.current && !window.confirm(`${t("records.unsavedDesc")}`)) return;
+    dirty.current = false;
+    onDone();
   }
 
   return (
@@ -482,20 +543,25 @@ function RecordForm({
           label={t("records.type")}
           options={RECORD_TYPES.map((rt) => ({ value: rt, label: rt }))}
           value={type}
-          onChange={(v) => setType(v as RecordType)}
+          onChange={(v) => { setType(v as RecordType); trackDirty(); }}
+          disabled={isEdit}
         />
+        {isEdit && (
+          <p className="self-end text-xs text-slate-400 dark:text-slate-500">{t("records.typeReadOnly")}</p>
+        )}
         <Input
           label={t("records.name")}
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => { setName(e.target.value); trackDirty(); }}
           placeholder={t("records.namePlaceholder")}
           required
         />
         <Input
           label={t("records.content")}
           value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder={t("records.contentPlaceholder")}
+          onChange={(e) => { setContent(e.target.value); trackDirty(); }}
+          placeholder={CONTENT_PLACEHOLDER[type] ?? t("records.contentPlaceholder")}
+          error={contentError}
           required
         />
         {showPriority && (
@@ -503,7 +569,7 @@ function RecordForm({
             label={t("records.priority")}
             type="number"
             value={priority}
-            onChange={(e) => setPriority(e.target.value)}
+            onChange={(e) => { setPriority(e.target.value); trackDirty(); }}
             hint={t("records.priorityHint")}
           />
         )}
@@ -512,7 +578,7 @@ function RecordForm({
             label={t("records.ttl")}
             options={CF_TTL_OPTIONS.map((opt) => ({ value: opt.value, label: cfTtlLabel(opt, t("records.auto")) }))}
             value={ttl}
-            onChange={(v) => setTtl(Number(v))}
+            onChange={(v) => { setTtl(Number(v)); trackDirty(); }}
             disabled={proxied}
           />
         ) : (
@@ -520,7 +586,7 @@ function RecordForm({
             label={t("records.ttlSeconds")}
             type="number"
             value={ttl}
-            onChange={(e) => setTtl(Number(e.target.value))}
+            onChange={(e) => { setTtl(Number(e.target.value)); trackDirty(); }}
           />
         )}
         {showLine && (
@@ -540,6 +606,7 @@ function RecordForm({
                   setLineL2("");
                   setLineL3("");
                   setLineL4("");
+                  trackDirty();
                 }}
               />
 
@@ -554,6 +621,7 @@ function RecordForm({
                   setLineL2(String(v));
                   setLineL3("");
                   setLineL4("");
+                  trackDirty();
                 }}
                 disabled={lineCategory === "default"}
               />
@@ -568,6 +636,7 @@ function RecordForm({
                 onChange={(v) => {
                   setLineL3(String(v));
                   setLineL4("");
+                  trackDirty();
                 }}
                 disabled={lineCategory === "default" || l3Options.length === 0}
               />
@@ -579,7 +648,7 @@ function RecordForm({
                   ...l4Options.map((id) => ({ value: id, label: stripPrefix(HW_DATA[id].name) })),
                 ]}
                 value={lineL4}
-                onChange={(v) => setLineL4(String(v))}
+                onChange={(v) => { setLineL4(String(v)); trackDirty(); }}
                 disabled={lineCategory !== "carrier" || l4Options.length === 0}
               />
             </div>
@@ -589,7 +658,7 @@ function RecordForm({
           <div className="self-end pb-2">
             <Toggle
               checked={proxied}
-              onChange={handleProxiedChange}
+              onChange={(v) => { handleProxiedChange(v); trackDirty(); }}
               label={t("records.proxied")}
               hint={t("records.proxiedHint")}
             />
@@ -604,12 +673,13 @@ function RecordForm({
                 zoneName={zoneName}
                 providerId={providerId}
                 recordId={record.id}
+                recordName={record.name}
                 onDone={onDone}
               />
             )}
           </div>
           <div className="flex gap-2">
-            <Button type="button" variant="secondary" onClick={onDone}>
+            <Button type="button" variant="secondary" onClick={handleCancel}>
               {t("records.cancel")}
             </Button>
             <Button type="submit" loading={busy}>
@@ -627,20 +697,27 @@ function DeleteButton({
   zoneName,
   providerId,
   recordId,
+  recordName,
   onDone,
 }: {
   zoneId: string;
   zoneName: string;
   providerId: string;
   recordId: string;
+  recordName: string;
   onDone: () => void;
 }) {
   const { t } = useLang();
   const [confirming, setConfirming] = useState(false);
+  const [confirmInput, setConfirmInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const nameMatch = confirmInput === recordName;
 
   async function remove() {
+    if (!nameMatch) return;
     setBusy(true);
     setError(null);
     try {
@@ -659,19 +736,31 @@ function DeleteButton({
 
   if (confirming) {
     return (
-      <span className="inline-flex items-center gap-1">
-        <Button variant="danger" onClick={remove} loading={busy}>
-          {t("records.confirm")}
-        </Button>
-        <Button
-          variant="secondary"
-          onClick={() => setConfirming(false)}
-          disabled={busy}
-        >
-          {t("records.cancel")}
-        </Button>
+      <div className="flex flex-col gap-2">
+        <p className="text-xs text-slate-600 dark:text-slate-400">
+          {t("records.deleteConfirmName")}: <span className="font-mono font-medium">{recordName}</span>
+        </p>
+        <Input
+          label={t("records.name")}
+          value={confirmInput}
+          onChange={(e) => setConfirmInput(e.target.value)}
+          placeholder={recordName}
+          inputRef={inputRef}
+        />
+        <span className="inline-flex items-center gap-1">
+          <Button variant="danger" onClick={remove} loading={busy} disabled={!nameMatch}>
+            {t("records.confirm")}
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => { setConfirming(false); setConfirmInput(""); }}
+            disabled={busy}
+          >
+            {t("records.cancel")}
+          </Button>
+        </span>
         {error && <span className="text-xs text-red-600">{error}</span>}
-      </span>
+      </div>
     );
   }
 
