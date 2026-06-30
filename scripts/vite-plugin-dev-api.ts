@@ -48,7 +48,7 @@ export function devApi(): Plugin {
           headers[k] = Array.isArray(v) ? v.join(", ") : v;
         }
 
-        const incoming = new Request(`http://localhost:${server.config.server.port ?? 5173}${url}`, {
+        const incoming = new Request(`http://localhost:${server.config.server.port ?? 3000}${url}`, {
           method: req.method ?? "GET",
           headers,
           body: body.length > 0 ? body : undefined,
