@@ -15,7 +15,7 @@ const translations: Record<Lang, Record<string, string>> = {
 
     // Home
     "home.title": "Dotnify",
-    "home.subtitle": "Manage DNS records across Cloudflare and Huawei Cloud from one place.",
+    "home.subtitle": "Manage DNS records across Cloudflare, Huawei Cloud and DNSPod from one place.",
     "home.providers": "Providers",
     "home.domains": "Domains",
     "home.active": "Active",
@@ -87,6 +87,8 @@ const translations: Record<Lang, Record<string, string>> = {
     "providers.apiToken": "API token",
     "providers.accessKeyId": "Access Key ID",
     "providers.secretAccessKey": "Secret Access Key",
+    "providers.secretId": "SecretId",
+    "providers.secretKey": "SecretKey",
     "providers.region": "Region",
     "providers.regionDefault": "Default (Global)",
     "providers.regionHint": "Huawei Cloud DNS is a global service — usually no region selection is needed.",
@@ -181,7 +183,7 @@ const translations: Record<Lang, Record<string, string>> = {
 
     // Home
     "home.title": "Dotnify",
-    "home.subtitle": "在一个地方管理 Cloudflare 和华为云的 DNS 记录。",
+    "home.subtitle": "在一个地方管理 Cloudflare、华为云和 DNSPod 的 DNS 记录。",
     "home.providers": "服务商",
     "home.domains": "域名",
     "home.active": "活跃",
@@ -253,6 +255,8 @@ const translations: Record<Lang, Record<string, string>> = {
     "providers.apiToken": "API 令牌",
     "providers.accessKeyId": "Access Key ID",
     "providers.secretAccessKey": "Secret Access Key",
+    "providers.secretId": "SecretId",
+    "providers.secretKey": "SecretKey",
     "providers.region": "区域",
     "providers.regionDefault": "默认（全局）",
     "providers.regionHint": "华为云 DNS 是全局服务，通常无需选择区域。",

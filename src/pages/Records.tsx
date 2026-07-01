@@ -12,6 +12,7 @@ import { Select } from "@/components/Select";
 import { SkeletonRow } from "@/components/Skeleton";
 import { EmptyState } from "@/components/EmptyState";
 import hwLineData from "@/huawei_line.json";
+import dpLineData from "@/dnspod_line.json";
 
 const RECORD_TYPES: RecordType[] = [
   "A",
@@ -61,6 +62,9 @@ interface HwLineEntry {
 }
 
 const HW_DATA = hwLineData as Record<string, HwLineEntry>;
+
+// DNSPod line translation: English name → Chinese name (from dnspod_line.json)
+const DP_LINE_ZH = dpLineData as Record<string, string>;
 
 // Build a children lookup map
 const HW_CHILDREN = new Map<string | null, string[]>();
@@ -173,14 +177,33 @@ function formatCfTtl(seconds: number, autoLabel: string): string {
 }
 
 export function Records() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const { zoneId } = useParams<{ zoneId: string }>();
   const [search] = useSearchParams();
   const providerId = search.get("providerId");
   const providerType = (search.get("providerType") ?? "cloudflare") as ProviderType;
   const zoneName = search.get("zoneName") ?? "";
   const showProxied = providerType === "cloudflare";
-  const showLine = providerType === "huawei";
+  const showLine = providerType === "huawei" || providerType === "dnspod";
+
+  // DNSPod line data for display in the table
+  const dpLinesPath = providerType === "dnspod" && zoneId && providerId
+    ? `/api/zones/${zoneId}/lines?providerId=${providerId}&providerType=dnspod&zoneName=${encodeURIComponent(zoneName)}`
+    : null;
+  const { data: dpLinesData } = useFetch<{ lineId: string; name: string }[]>(dpLinesPath ?? "");
+  const dpLineNameMap = useMemo(() => {
+    if (!dpLinesData) return new Map<string, string>();
+    return new Map(dpLinesData.map((l) => [l.lineId, l.name]));
+  }, [dpLinesData]);
+
+  function displayLineName(lineId: string | undefined): string {
+    if (!lineId) return "Default";
+    if (providerType === "dnspod") {
+      const name = dpLineNameMap.get(lineId) ?? lineId;
+      return lang === "zh-CN" ? (DP_LINE_ZH[name] ?? name) : name;
+    }
+    return getLineName(lineId);
+  }
 
   const path =
     zoneId && providerId
@@ -349,7 +372,7 @@ export function Records() {
                     </td>
                     {showLine && (
                       <td className="px-4 py-2 text-slate-600 dark:text-slate-300">
-                        {getLineName(r.line)}
+                        {displayLineName(r.line)}
                       </td>
                     )}
                     {showProxied && (
@@ -394,10 +417,32 @@ function RecordForm({
   record?: DnsRecord;
   onDone: () => void;
 }) {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const isEdit = !!record;
   const showProxied = providerType === "cloudflare";
-  const showLine = providerType === "huawei";
+  const showLine = providerType === "huawei" || providerType === "dnspod";
+
+  // DNSPod line data (fetched from API)
+  const dpLinesPath = providerType === "dnspod" && zoneId && providerId
+    ? `/api/zones/${zoneId}/lines?providerId=${providerId}&providerType=dnspod&zoneName=${encodeURIComponent(zoneName)}`
+    : null;
+  const { data: dpLinesData } = useFetch<{ lineId: string; name: string; parent: string | null }[]>(dpLinesPath ?? "");
+
+  // Build DNSPod line lookup maps
+  const dpLineMap = useMemo(() => {
+    if (providerType !== "dnspod" || !dpLinesData) return { byId: new Map<string, string>(), children: new Map<string | null, string[]>() };
+    const byId = new Map<string, string>();
+    const children = new Map<string | null, string[]>();
+    for (const line of dpLinesData) {
+      byId.set(line.lineId, line.name);
+      if (!children.has(line.parent)) children.set(line.parent, []);
+      children.get(line.parent)!.push(line.lineId);
+    }
+    return { byId, children };
+  }, [providerType, dpLinesData]);
+
+  // DNSPod line state
+  const [dpLineId, setDpLineId] = useState<string>(record?.line ?? "0");
 
   // Cascading line state
   const [lineCategory, setLineCategory] = useState<string>(() => {
@@ -417,14 +462,15 @@ function RecordForm({
     return resolveLineToLevels(record.line)[3];
   });
 
-  // Derive the final line ID from the cascade
+  // Derive the final line ID from the cascade (Huawei) or directly (DNSPod)
   const line = useMemo(() => {
+    if (providerType === "dnspod") return dpLineId;
     if (lineCategory === "default") return "default_view";
     if (lineL4) return lineL4;
     if (lineL3) return lineL3;
     if (lineL2) return lineL2;
     return "default_view";
-  }, [lineCategory, lineL2, lineL3, lineL4]);
+  }, [providerType, dpLineId, lineCategory, lineL2, lineL3, lineL4]);
 
   // Level 2 options
   const l2Options = useMemo(() => {
@@ -448,7 +494,7 @@ function RecordForm({
   const [type, setType] = useState<RecordType>(record?.type ?? "A");
   const [name, setName] = useState(record?.name ?? "");
   const [content, setContent] = useState(record?.content ?? "");
-  const [ttl, setTtl] = useState<number>(record?.ttl ?? 1);
+  const [ttl, setTtl] = useState<number>(record?.ttl ?? (providerType === "dnspod" ? 600 : 1));
   const [proxied, setProxied] = useState<boolean>(record?.proxied ?? false);
 
   // When proxied changes, force TTL to 1 (auto)
@@ -508,7 +554,7 @@ function RecordForm({
     setBusy(true);
     const base = `/api/zones/${zoneId}/records`;
     const query = `?providerId=${providerId}&zoneName=${encodeURIComponent(zoneName)}`;
-    const body: Record<string, unknown> = { type, name, content, ttl };
+    const body: Record<string, unknown> = { type, name, content, ttl: providerType === "dnspod" && ttl < 600 ? 600 : ttl };
     if (showProxied) body.proxied = proxied;
     if (showLine) body.line = line;
     if (showPriority && priority !== "") body.priority = Number(priority);
@@ -589,7 +635,19 @@ function RecordForm({
             onChange={(e) => { setTtl(Number(e.target.value)); trackDirty(); }}
           />
         )}
-        {showLine && (
+        {showLine && providerType === "dnspod" && (
+          <div className="flex flex-col gap-1 md:col-span-2">
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t("records.line")}</label>
+            <DnsLineSelector
+              lineId={dpLineId}
+              lines={dpLinesData ?? []}
+              lineMap={dpLineMap}
+              onChange={(id) => { setDpLineId(id); trackDirty(); }}
+              lang={lang}
+            />
+          </div>
+        )}
+        {showLine && providerType === "huawei" && (
           <div className="flex flex-col gap-1 md:col-span-2">
             <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t("records.line")}</label>
             <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
@@ -689,6 +747,86 @@ function RecordForm({
         </div>
       </form>
     </Card>
+  );
+}
+
+/**
+ * DNSPod line selector — simplified 2-level cascade.
+ * Level 1: top-level groups (parent=null), Level 2: children of selected group.
+ */
+function DnsLineSelector({
+  lineId,
+  lines,
+  lineMap,
+  onChange,
+  lang,
+}: {
+  lineId: string;
+  lines: { lineId: string; name: string; parent: string | null }[];
+  lineMap: { byId: Map<string, string>; children: Map<string | null, string[]> };
+  onChange: (id: string) => void;
+  lang: string;
+}) {
+  // Find the parent of the current lineId
+  const currentLine = lines.find((l) => l.lineId === lineId);
+  const topLevelIds = lineMap.children.get(null) ?? [];
+
+  // Find the default line id (parent=null, usually "0")
+  const defaultId = topLevelIds.length > 0 ? topLevelIds[0] : "0";
+
+  // Determine the selected top-level group
+  const [selectedGroup, setSelectedGroup] = useState<string | null>(() => {
+    if (!currentLine) return defaultId;
+    // Walk up to find top-level parent
+    let parent = currentLine.parent;
+    while (parent !== null) {
+      const parentLine = lines.find((l) => l.lineId === parent);
+      if (!parentLine || parentLine.parent === null) break;
+      parent = parentLine.parent;
+    }
+    return parent ?? defaultId;
+  });
+
+  const childIds = lineMap.children.get(selectedGroup) ?? [];
+
+  // Check if current lineId is a top-level item
+  const isTopLevel = topLevelIds.includes(lineId);
+
+  function handleGroupChange(group: string | number) {
+    const val = String(group);
+    setSelectedGroup(val);
+    onChange(val);
+  }
+
+  function handleChildChange(id: string | number) {
+    onChange(String(id));
+  }
+
+  function lineLabel(id: string): string {
+    const name = lineMap.byId.get(id) ?? id;
+    return lang === "zh-CN" ? (DP_LINE_ZH[name] ?? name) : name;
+  }
+
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {/* Level 1: Top-level groups */}
+      <Select
+        options={topLevelIds.map((id) => ({ value: id, label: lineLabel(id) }))}
+        value={selectedGroup ?? defaultId}
+        onChange={handleGroupChange}
+      />
+
+      {/* Level 2: Children of selected group */}
+      <Select
+        options={[
+          { value: selectedGroup ?? defaultId, label: lineLabel(selectedGroup ?? defaultId) },
+          ...childIds.map((id) => ({ value: id, label: lineLabel(id) })),
+        ]}
+        value={isTopLevel ? (selectedGroup ?? defaultId) : lineId}
+        onChange={handleChildChange}
+        disabled={childIds.length === 0}
+      />
+    </div>
   );
 }
 

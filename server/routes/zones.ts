@@ -12,6 +12,15 @@ import {
   stripHost,
 } from "../lib/huawei.js";
 import { getLines } from "../lib/huawei-line.js";
+import {
+  listZones as dpListZones,
+  listRecords as dpListRecords,
+  createRecord as dpCreateRecord,
+  updateRecord as dpUpdateRecord,
+  deleteRecord as dpDeleteRecord,
+  listLines as dpListLines,
+} from "../lib/dnspod.js";
+import type { DpRecord } from "../lib/dnspod.js";
 import type { Provider, Zone, DnsRecord } from "../lib/types.js";
 import type { AuthedVariables } from "../lib/types.js";
 
@@ -60,6 +69,11 @@ zones.get("/", async (c) => {
             p.apiSecretKey ?? "",
             p.region
           );
+        } else if (p.type === "dnspod") {
+          zoneList = await dpListZones(
+            p.apiAccessKey ?? "",
+            p.apiSecretKey ?? ""
+          );
         }
 
         const selected = Array.isArray(p.selectedZones) ? p.selectedZones : [];
@@ -91,9 +105,28 @@ zones.get("/", async (c) => {
 
 /**
  * GET /api/zones/:zoneId/lines
- * Return Huawei Cloud resolution lines from local JSON file.
+ * Return resolution lines. For Huawei Cloud, from local JSON; for DNSPod, from API.
  */
 zones.get("/:zoneId/lines", async (c) => {
+  const providerId = c.req.query("providerId");
+  const providerType = c.req.query("providerType");
+
+  if (providerType === "dnspod" && providerId) {
+    const provider = await findProvider(providerId);
+    if (!provider) return notFound(c, "Provider not found");
+    const zoneName = c.req.query("zoneName") ?? "";
+    try {
+      const lines = await dpListLines(
+        provider.apiAccessKey ?? "",
+        provider.apiSecretKey ?? "",
+        zoneName
+      );
+      return ok(c, lines);
+    } catch {
+      return error(c, "Failed to fetch DNSPod lines", 502);
+    }
+  }
+
   return ok(c, getLines());
 });
 
@@ -145,6 +178,31 @@ function normalizeHw(rs: { id: string; name: string; type: string; ttl: number; 
   };
 }
 
+function normalizeDp(r: DpRecord): DnsRecord {
+  return {
+    id: r.id,
+    type: r.type as DnsRecord["type"],
+    name: r.name,
+    content: r.content,
+    ttl: r.ttl,
+    line: r.line,
+    priority: r.type === "MX" ? r.mx : undefined,
+    status: r.status === "ENABLE" ? "enable" : "disable",
+    weight: r.weight || undefined,
+  };
+}
+
+async function resolveDpLineName(secretId: string, secretKey: string, domain: string, lineId: string | undefined): Promise<string> {
+  if (!lineId || lineId === "0") return "Default";
+  try {
+    const lines = await dpListLines(secretId, secretKey, domain);
+    const found = lines.find((l) => l.lineId === lineId);
+    return found?.name ?? lineId;
+  } catch {
+    return lineId;
+  }
+}
+
 /**
  * GET /api/zones/:zoneId/records?providerId=...
  */
@@ -174,6 +232,16 @@ zones.get("/:zoneId/records", async (c) => {
         zoneId
       );
       const records = recordSets.map((rs) => normalizeHw(rs, zoneName));
+      return ok(c, records);
+    }
+
+    if (provider.type === "dnspod") {
+      const dpRecords = await dpListRecords(
+        provider.apiAccessKey ?? "",
+        provider.apiSecretKey ?? "",
+        zoneName
+      );
+      const records = dpRecords.map(normalizeDp);
       return ok(c, records);
     }
 
@@ -239,6 +307,24 @@ zones.post("/:zoneId/records", async (c) => {
         }
       );
       return ok(c, normalizeHw(rs, zoneName), 201);
+    }
+
+    if (provider.type === "dnspod") {
+      const ak = provider.apiAccessKey ?? "";
+      const sk = provider.apiSecretKey ?? "";
+      const lineName = await resolveDpLineName(ak, sk, zoneName, body.line);
+      const dpTtl = Math.max(Number(body.ttl) || 600, 600);
+      const r = await dpCreateRecord(ak, sk, zoneName, {
+        name: body.name,
+        type: body.type,
+        content: body.content,
+        line: body.line,
+        lineName,
+        ttl: dpTtl,
+        mx: body.priority,
+        weight: body.weight,
+      });
+      return ok(c, normalizeDp(r), 201);
     }
 
     return error(c, `Unsupported provider type: ${provider.type}`, 400);
@@ -312,6 +398,37 @@ zones.patch("/:zoneId/records/:recordId", async (c) => {
       return ok(c, normalizeHw(rs, zoneName));
     }
 
+    if (provider.type === "dnspod") {
+      const ak = provider.apiAccessKey ?? "";
+      const sk = provider.apiSecretKey ?? "";
+
+      // DNSPod ModifyRecord requires all fields, so fetch existing first
+      const existingRecords = await dpListRecords(ak, sk, zoneName);
+      const existing = existingRecords.find((r) => r.id === recordId);
+      if (!existing) return notFound(c, "Record not found");
+
+      const resolvedLine = body.line ?? existing.line;
+      const lineName = await resolveDpLineName(ak, sk, zoneName, resolvedLine);
+      const dpTtl = Math.max(Number(body.ttl ?? existing.ttl) || 600, 600);
+
+      await dpUpdateRecord(ak, sk, zoneName, recordId, {
+        name: body.name ?? existing.name,
+        type: body.type ?? existing.type,
+        content: body.content ?? existing.content,
+        line: resolvedLine,
+        lineName,
+        ttl: dpTtl,
+        mx: body.priority ?? existing.mx,
+        weight: body.weight ?? existing.weight,
+      });
+
+      // Re-fetch the updated record
+      const updatedRecords = await dpListRecords(ak, sk, zoneName);
+      const updated = updatedRecords.find((r) => r.id === recordId);
+      if (!updated) return notFound(c, "Record not found after update");
+      return ok(c, normalizeDp(updated));
+    }
+
     return error(c, `Unsupported provider type: ${provider.type}`, 400);
   } catch {
     return error(c, "Failed to update record", 502);
@@ -324,6 +441,7 @@ zones.patch("/:zoneId/records/:recordId", async (c) => {
 zones.delete("/:zoneId/records/:recordId", async (c) => {
   const zoneId = c.req.param("zoneId");
   const recordId = c.req.param("recordId");
+  const zoneName = c.req.query("zoneName") ?? "";
   const provider = await findProvider(c.req.query("providerId"));
   if (!provider) return notFound(c, "Provider not found");
   if (!zoneId || !recordId) return error(c, "zoneId and recordId are required");
@@ -344,6 +462,16 @@ zones.delete("/:zoneId/records/:recordId", async (c) => {
         provider.apiSecretKey ?? "",
         provider.region,
         zoneId,
+        recordId
+      );
+      return ok(c, { deleted: true });
+    }
+
+    if (provider.type === "dnspod") {
+      await dpDeleteRecord(
+        provider.apiAccessKey ?? "",
+        provider.apiSecretKey ?? "",
+        zoneName,
         recordId
       );
       return ok(c, { deleted: true });

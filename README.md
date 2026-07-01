@@ -34,6 +34,7 @@ English | [简体中文](./README.zh-CN.md)
 │   │   ├── cloudflare.ts          # Cloudflare API client (REST + Bearer token)
 │   │   ├── huawei.ts              # Huawei Cloud DNS client (REST + AK/SK HMAC-SHA256 signing)
 │   │   ├── huawei-line.ts         # Huawei Cloud resolution line data loader
+│   │   ├── dnspod.ts              # DNSPod (Tencent Cloud) client (REST + TC3-HMAC-SHA256 signing)
 │   │   ├── middleware.ts          # Auth middleware (Hono createMiddleware)
 │   │   ├── redis.ts               # Upstash Redis client + key definitions
 │   │   ├── response.ts            # JSON response helpers (ok, error, notFound, etc.)
@@ -54,6 +55,7 @@ English | [简体中文](./README.zh-CN.md)
 │   │   ├── Login.tsx              # Login page
 │   │   └── Setup.tsx              # Initial admin setup
 │   ├── huawei_line.json           # Huawei Cloud resolution line data (static, ~300 entries)
+│   ├── dnspod_line.json           # DNSPod resolution line translations (English → Chinese)
 │   ├── router.tsx                 # React Router config with auth guards
 │   └── App.tsx                    # Root component
 ├── scripts/

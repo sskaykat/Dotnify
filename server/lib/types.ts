@@ -14,7 +14,7 @@ export interface Session {
   createdAt: string; // ISO timestamp
 }
 
-export type ProviderType = "cloudflare" | "huawei";
+export type ProviderType = "cloudflare" | "huawei" | "dnspod";
 
 export interface Provider {
   id: string;
@@ -58,7 +58,9 @@ export interface DnsRecord {
   proxied?: boolean;
   priority?: number;
   comment?: string;
-  line?: string; // Huawei Cloud: resolution line (线路类型)
+  line?: string; // Huawei Cloud / DNSPod: resolution line (线路类型)
+  status?: string; // DNSPod: "enable" | "disable"
+  weight?: number; // DNSPod: record weight
 }
 
 export interface CloudflareResponse<T> {

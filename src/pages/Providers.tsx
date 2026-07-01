@@ -95,16 +95,25 @@ function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => v
         return;
       }
     }
+    if (providerType === "dnspod") {
+      if (!apiAccessKey.trim() || !apiSecretKey.trim()) {
+        setError(t("providers.akSkRequired"));
+        return;
+      }
+    }
 
     setBusy(true);
     try {
       const body: Record<string, unknown> = { type: providerType };
       if (providerType === "cloudflare") {
         body.apiKey = apiKey.trim();
-      } else {
+      } else if (providerType === "huawei") {
         body.apiAccessKey = apiAccessKey.trim();
         body.apiSecretKey = apiSecretKey.trim();
         if (region) body.region = region;
+      } else if (providerType === "dnspod") {
+        body.apiAccessKey = apiAccessKey.trim();
+        body.apiSecretKey = apiSecretKey.trim();
       }
       const result = await apiFetch<Zone[]>("/api/providers/verify", {
         method: "POST",
@@ -141,10 +150,13 @@ function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => v
       };
       if (providerType === "cloudflare") {
         body.apiKey = apiKey.trim();
-      } else {
+      } else if (providerType === "huawei") {
         body.apiAccessKey = apiAccessKey.trim();
         body.apiSecretKey = apiSecretKey.trim();
         if (region) body.region = region;
+      } else if (providerType === "dnspod") {
+        body.apiAccessKey = apiAccessKey.trim();
+        body.apiSecretKey = apiSecretKey.trim();
       }
       await apiFetch("/api/providers", {
         method: "POST",
@@ -193,12 +205,12 @@ function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => v
   }
 
   return (
-    <Card title={providerType === "huawei" ? "Add Huawei Cloud provider" : "Add Cloudflare provider"}>
+    <Card title={providerType === "huawei" ? "Add Huawei Cloud provider" : providerType === "dnspod" ? "Add DNSPod provider" : "Add Cloudflare provider"}>
       <form onSubmit={verifyAndFetchZones} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
           <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t("providers.providerType")}</label>
           <div className="flex gap-2">
-            {(["cloudflare", "huawei"] as ProviderType[]).map((pt) => (
+            {(["cloudflare", "huawei", "dnspod"] as ProviderType[]).map((pt) => (
               <button
                 key={pt}
                 type="button"
@@ -209,7 +221,7 @@ function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => v
                     : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-slate-500"
                 }`}
               >
-                {pt === "cloudflare" ? "Cloudflare" : "Huawei Cloud"}
+                {pt === "cloudflare" ? "Cloudflare" : pt === "huawei" ? "Huawei Cloud" : "DNSPod"}
               </button>
             ))}
           </div>
@@ -219,7 +231,7 @@ function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => v
           name="name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder={providerType === "cloudflare" ? "My Cloudflare account" : "My Huawei Cloud account"}
+          placeholder={providerType === "cloudflare" ? "My Cloudflare account" : providerType === "dnspod" ? "My DNSPod account" : "My Huawei Cloud account"}
           required
           hint="A label so you can tell providers apart later."
         />
@@ -235,6 +247,30 @@ function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => v
             hint="We verify the token against Cloudflare, then let you pick zones."
             error={error}
           />
+        ) : providerType === "dnspod" ? (
+          <>
+            <Input
+              label={t("providers.secretId")}
+              name="apiAccessKey"
+              type="password"
+              value={apiAccessKey}
+              onChange={(e) => setApiAccessKey(e.target.value)}
+              placeholder="Tencent Cloud SecretId"
+              required
+              hint="Your Tencent Cloud SecretId."
+            />
+            <Input
+              label={t("providers.secretKey")}
+              name="apiSecretKey"
+              type="password"
+              value={apiSecretKey}
+              onChange={(e) => setApiSecretKey(e.target.value)}
+              placeholder="Tencent Cloud SecretKey"
+              required
+              hint="Your Tencent Cloud SecretKey."
+            />
+            {error && <p className="text-xs text-red-600">{error}</p>}
+          </>
         ) : (
           <>
             <Input
@@ -337,6 +373,11 @@ function ProviderRow({ provider, onChanged }: { provider: Provider; onChanged: (
                   <dt className="inline">{t("providers.token")}:</dt>{" "}
                   <dd className="inline font-mono text-slate-700 dark:text-slate-300">{provider.apiKey}</dd>
                 </div>
+              ) : provider.type === "dnspod" ? (
+                <div>
+                  <dt className="inline">{t("providers.ak")}:</dt>{" "}
+                  <dd className="inline font-mono text-slate-700 dark:text-slate-300">{provider.apiAccessKey}</dd>
+                </div>
               ) : (
                 <>
                   <div>
@@ -413,6 +454,10 @@ function EditProviderForm({ provider, onSaved, onCancel }: { provider: Provider;
         if (apiSecretKey.trim()) body.apiSecretKey = apiSecretKey.trim();
         if (region !== (provider.region ?? "")) body.region = region;
       }
+      if (provider.type === "dnspod") {
+        if (apiAccessKey.trim()) body.apiAccessKey = apiAccessKey.trim();
+        if (apiSecretKey.trim()) body.apiSecretKey = apiSecretKey.trim();
+      }
       await apiFetch(`/api/providers/${provider.id}`, {
         method: "PATCH",
         body,
@@ -445,6 +490,25 @@ function EditProviderForm({ provider, onSaved, onCancel }: { provider: Provider;
             onChange={(e) => setApiKey(e.target.value)}
             placeholder={t("providers.leaveBlankToken")}
           />
+        ) : provider.type === "dnspod" ? (
+          <>
+            <Input
+              label={t("providers.secretId")}
+              name="apiAccessKey"
+              type="password"
+              value={apiAccessKey}
+              onChange={(e) => setApiAccessKey(e.target.value)}
+              placeholder={t("providers.leaveBlankKey")}
+            />
+            <Input
+              label={t("providers.secretKey")}
+              name="apiSecretKey"
+              type="password"
+              value={apiSecretKey}
+              onChange={(e) => setApiSecretKey(e.target.value)}
+              placeholder={t("providers.leaveBlankKey")}
+            />
+          </>
         ) : (
           <>
             <Input

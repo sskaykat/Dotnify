@@ -14,7 +14,7 @@ export interface SetupResponse {
   createdAt: string;
 }
 
-export type ProviderType = "cloudflare" | "huawei";
+export type ProviderType = "cloudflare" | "huawei" | "dnspod";
 
 export interface Provider {
   id: string;
@@ -64,5 +64,7 @@ export interface DnsRecord {
   proxied?: boolean;
   priority?: number;
   comment?: string;
-  line?: string; // Huawei Cloud: resolution line
+  line?: string; // Huawei Cloud / DNSPod: resolution line
+  status?: string; // DNSPod: "enable" | "disable"
+  weight?: number; // DNSPod: record weight
 }

@@ -34,6 +34,7 @@
 │   │   ├── cloudflare.ts          # Cloudflare API 客户端（REST + Bearer Token）
 │   │   ├── huawei.ts              # 华为云 DNS 客户端（REST + AK/SK HMAC-SHA256 签名）
 │   │   ├── huawei-line.ts         # 华为云解析线路数据加载
+│   │   ├── dnspod.ts              # DNSPod（腾讯云）客户端（REST + TC3-HMAC-SHA256 签名）
 │   │   ├── middleware.ts          # 鉴权中间件（Hono createMiddleware）
 │   │   ├── redis.ts               # Upstash Redis 客户端 + 键名定义
 │   │   ├── response.ts            # JSON 响应辅助（ok、error、notFound 等）
@@ -54,6 +55,7 @@
 │   │   ├── Login.tsx              # 登录页
 │   │   └── Setup.tsx              # 初始管理员设置
 │   ├── huawei_line.json           # 华为云解析线路数据（静态文件，约 300 条）
+│   ├── dnspod_line.json           # DNSPod 解析线路翻译对照（英文 → 中文）
 │   ├── router.tsx                 # React Router 配置，含鉴权守卫
 │   └── App.tsx                    # 根组件
 ├── scripts/
