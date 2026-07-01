@@ -205,7 +205,7 @@ function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => v
   }
 
   return (
-    <Card title={providerType === "huawei" ? "Add Huawei Cloud provider" : providerType === "dnspod" ? "Add DNSPod provider" : "Add Cloudflare provider"}>
+    <Card title={providerType === "huawei" ? t("providers.addHuawei") : providerType === "dnspod" ? t("providers.addDnspod") : t("providers.addCloudflare")}>
       <form onSubmit={verifyAndFetchZones} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
           <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t("providers.providerType")}</label>
@@ -221,7 +221,7 @@ function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => v
                     : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-slate-500"
                 }`}
               >
-                {pt === "cloudflare" ? "Cloudflare" : pt === "huawei" ? "Huawei Cloud" : "DNSPod"}
+                {pt === "cloudflare" ? "Cloudflare" : pt === "huawei" ? t("providers.huaweiCloud") : "DNSPod"}
               </button>
             ))}
           </div>
@@ -231,9 +231,9 @@ function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => v
           name="name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder={providerType === "cloudflare" ? "My Cloudflare account" : providerType === "dnspod" ? "My DNSPod account" : "My Huawei Cloud account"}
+          placeholder={providerType === "cloudflare" ? t("providers.placeholderCloudflare") : providerType === "dnspod" ? t("providers.placeholderDnspod") : t("providers.placeholderHuawei")}
           required
-          hint="A label so you can tell providers apart later."
+          hint={t("providers.nameHint")}
         />
         {providerType === "cloudflare" ? (
           <Input
@@ -244,7 +244,7 @@ function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => v
             onChange={(e) => setApiKey(e.target.value)}
             placeholder="Cloudflare API token"
             required
-            hint="We verify the token against Cloudflare, then let you pick zones."
+            hint={t("providers.cfTokenHint")}
             error={error}
           />
         ) : providerType === "dnspod" ? (
@@ -257,7 +257,7 @@ function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => v
               onChange={(e) => setApiAccessKey(e.target.value)}
               placeholder="Tencent Cloud SecretId"
               required
-              hint="Your Tencent Cloud SecretId."
+              hint={t("providers.dpSidHint")}
             />
             <Input
               label={t("providers.secretKey")}
@@ -267,7 +267,7 @@ function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => v
               onChange={(e) => setApiSecretKey(e.target.value)}
               placeholder="Tencent Cloud SecretKey"
               required
-              hint="Your Tencent Cloud SecretKey."
+              hint={t("providers.dpSkHint")}
             />
             {error && <p className="text-xs text-red-600">{error}</p>}
           </>
@@ -281,7 +281,7 @@ function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => v
               onChange={(e) => setApiAccessKey(e.target.value)}
               placeholder="Huawei Cloud AK"
               required
-              hint="Your Huawei Cloud access key ID."
+              hint={t("providers.hwAkHint")}
             />
             <Input
               label={t("providers.secretAccessKey")}
@@ -291,7 +291,7 @@ function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => v
               onChange={(e) => setApiSecretKey(e.target.value)}
               placeholder="Huawei Cloud SK"
               required
-              hint="Your Huawei Cloud secret access key."
+              hint={t("providers.hwSkHint")}
             />
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t("providers.region")}</label>
