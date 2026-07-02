@@ -15,14 +15,16 @@ import { Spinner } from "@/components/Spinner";
  * Root loader: determine setup/login state. Re-runs whenever a consumer calls
  * useRevalidator().revalidate() (e.g. after login / logout).
  */
+const DEFAULT_ME: MeResponse = { setupRequired: false, authenticated: false, username: null };
+
 export async function rootLoader() {
   try {
     // Don't force noAuth: if a token exists in localStorage, send it so the
     // me endpoint can report authenticated=true right after login.
     const me = await apiFetch<MeResponse>("/api/auth/me", { allow401: true });
-    return { me };
+    return { me: me ?? DEFAULT_ME };
   } catch {
-    return { me: { setupRequired: false, authenticated: false, username: null } as MeResponse };
+    return { me: DEFAULT_ME };
   }
 }
 
