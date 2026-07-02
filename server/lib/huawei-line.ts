@@ -1,4 +1,6 @@
-import lineData from "../../src/huawei_line.json";
+import { createRequire } from "node:module";
+const require = createRequire(import.meta.url);
+const lineData = require("../../src/huawei_line.json");
 
 interface LineEntry {
   name: string;
