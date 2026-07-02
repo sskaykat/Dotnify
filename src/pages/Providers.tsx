@@ -6,6 +6,7 @@ import type { Provider, ProviderType, Zone } from "@/lib/types";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
+import { Select } from "@/components/Select";
 import { Spinner } from "@/components/Spinner";
 import { EmptyState } from "@/components/EmptyState";
 
@@ -207,25 +208,16 @@ function AddForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => v
   return (
     <Card title={providerType === "huawei" ? t("providers.addHuawei") : providerType === "dnspod" ? t("providers.addDnspod") : t("providers.addCloudflare")}>
       <form onSubmit={verifyAndFetchZones} className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t("providers.providerType")}</label>
-          <div className="flex gap-2">
-            {(["cloudflare", "huawei", "dnspod"] as ProviderType[]).map((pt) => (
-              <button
-                key={pt}
-                type="button"
-                onClick={() => setProviderType(pt)}
-                className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
-                  providerType === pt
-                    ? "border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-900/30 dark:text-brand-400 dark:border-brand-400"
-                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-slate-500"
-                }`}
-              >
-                {pt === "cloudflare" ? "Cloudflare" : pt === "huawei" ? t("providers.huaweiCloud") : "DNSPod"}
-              </button>
-            ))}
-          </div>
-        </div>
+        <Select
+          label={t("providers.providerType")}
+          value={providerType}
+          onChange={(v) => setProviderType(v as ProviderType)}
+          options={[
+            { value: "cloudflare", label: "Cloudflare" },
+            { value: "huawei", label: t("providers.huaweiCloud") },
+            { value: "dnspod", label: "DNSPod" },
+          ]}
+        />
         <Input
           label={t("providers.displayName")}
           name="name"
