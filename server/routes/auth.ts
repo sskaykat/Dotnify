@@ -53,6 +53,9 @@ auth.post("/login", rateLimit, async (c) => {
   if (!username || !password) {
     return unauthorized(c, "Username and password required");
   }
+  if (password.length > 128) {
+    return error(c, "Password too long");
+  }
 
   const admin = await getAdmin();
   // Always run verifyPassword to prevent timing-based username enumeration.
@@ -101,8 +104,14 @@ auth.post("/setup", rateLimit, async (c) => {
   if (!username || username.length < 3) {
     return error(c, "Username must be at least 3 characters");
   }
+  if (username.length > 64) {
+    return error(c, "Username too long");
+  }
   if (password.length < 8) {
     return error(c, "Password must be at least 8 characters");
+  }
+  if (password.length > 128) {
+    return error(c, "Password too long");
   }
 
   const passwordHash = await hashPassword(password);
