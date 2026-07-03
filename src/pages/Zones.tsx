@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { apiFetch } from "@/lib/api";
 import { useFetch } from "@/hooks/useFetch";
@@ -9,6 +9,8 @@ import { Button } from "@/components/Button";
 import { EmptyState } from "@/components/EmptyState";
 import { ProviderLogo } from "@/components/ProviderLogo";
 import { Skeleton } from "@/components/Skeleton";
+import { Input } from "@/components/Input";
+import { Select } from "@/components/Select";
 
 interface ZonesResponse {
   zones: ZoneWithProvider[];
@@ -21,6 +23,24 @@ export function Zones() {
   const zones = data?.zones ?? [];
   const providerErrors = data?.errors ?? [];
   const [showForm, setShowForm] = useState(false);
+  const [search, setSearch] = useState("");
+  const [providerFilter, setProviderFilter] = useState<string>("");
+
+  const providerOptions = useMemo(() => {
+    const names = [...new Set(zones.map((z) => z.providerName))];
+    return [
+      { value: "", label: t("zones.allProviders") },
+      ...names.map((n) => ({ value: n, label: n })),
+    ];
+  }, [zones, t]);
+
+  const filteredZones = useMemo(() => {
+    return zones.filter((z) => {
+      if (providerFilter && z.providerName !== providerFilter) return false;
+      if (search && !z.name.toLowerCase().includes(search.toLowerCase())) return false;
+      return true;
+    });
+  }, [zones, search, providerFilter]);
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -44,6 +64,24 @@ export function Zones() {
 
       {showForm && <AddDomainForm managedZones={zones} onSaved={() => { setShowForm(false); void refetch(); }} onCancel={() => setShowForm(false)} />}
 
+      {zones.length > 0 && (
+        <div className="flex items-center gap-3">
+          <Input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t("zones.searchPlaceholder")}
+            className="max-w-xs"
+          />
+          <Select
+            options={providerOptions}
+            value={providerFilter}
+            onChange={(v) => setProviderFilter(String(v))}
+            className="min-w-[160px]"
+          />
+        </div>
+      )}
+
       {loading ? (
         <ul className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
           {Array.from({ length: 5 }).map((_, i) => (
@@ -62,6 +100,11 @@ export function Zones() {
           <p className="text-sm text-red-600">{error}</p>
           <Button variant="secondary" className="mt-3" onClick={() => void refetch()}>{t("zones.retry")}</Button>
         </Card>
+      ) : filteredZones.length === 0 && zones.length > 0 ? (
+        <EmptyState
+          title={t("zones.noDomains")}
+          description={t("zones.noDomainsDesc")}
+        />
       ) : zones.length === 0 ? (
         <EmptyState
           title={t("zones.noDomains")}
@@ -70,7 +113,7 @@ export function Zones() {
         />
       ) : (
         <ul className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
-          {zones.map((z) => (
+          {filteredZones.map((z) => (
             <ZoneRow key={`${z.providerId}:${z.id}`} zone={z} allZones={zones} onRemoved={() => void refetch()} />
           ))}
         </ul>
