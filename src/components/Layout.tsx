@@ -2,15 +2,13 @@ import { useState } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLang } from "@/lib/i18n";
-import { useTheme, type Theme } from "@/lib/theme";
 import { Button } from "./Button";
-
-const THEME_ORDER: Theme[] = ["system", "light", "dark"];
+import { AppearanceSwitch } from "./AppearanceSwitch";
+import { LangSwitch } from "./LangSwitch";
 
 export function Layout() {
   const { username, logout, authenticated } = useAuth();
-  const { lang, setLang, t } = useLang();
-  const { theme, setTheme } = useTheme();
+  const { t } = useLang();
   const [busy, setBusy] = useState(false);
 
   const NAV = [
@@ -23,17 +21,10 @@ export function Layout() {
     setBusy(true);
     try {
       await logout();
-      // Hard refresh so the root loader re-runs from a clean state; avoids
-      // any race between the in-flight revalidate and the route guards.
       window.location.assign("/login");
     } finally {
       setBusy(false);
     }
-  }
-
-  function cycleTheme() {
-    const i = THEME_ORDER.indexOf(theme);
-    setTheme(THEME_ORDER[(i + 1) % THEME_ORDER.length]);
   }
 
   return (
@@ -77,21 +68,9 @@ export function Layout() {
                 </NavLink>
               ))}
             </nav>
-            <div className="mt-auto space-y-1">
-              <button
-                type="button"
-                onClick={cycleTheme}
-                className="w-full rounded-lg px-3 py-2 text-left text-xs font-medium text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-300"
-              >
-                {t(`theme.${theme}`)}
-              </button>
-              <button
-                type="button"
-                onClick={() => setLang(lang === "en" ? "zh-CN" : "en")}
-                className="w-full rounded-lg px-3 py-2 text-left text-xs font-medium text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-300"
-              >
-                {lang === "en" ? "中文" : "EN"}
-              </button>
+            <div className="mt-auto flex items-center justify-between px-1">
+              <LangSwitch />
+              <AppearanceSwitch />
             </div>
           </aside>
         )}
