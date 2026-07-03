@@ -1,29 +1,29 @@
+import { redis } from "./redis.js";
 import type { Context, Next } from "hono";
 
-const attempts = new Map<string, { count: number; resetAt: number }>();
-
-const WINDOW_MS = 60_000; // 1 minute
+const WINDOW_SECONDS = 60;
 const MAX_ATTEMPTS = 10;
 
 /**
- * Simple in-memory rate limiter keyed by IP.
- * Allows MAX_ATTEMPTS requests per WINDOW_MS per IP.
+ * Redis-backed rate limiter keyed by IP.
+ * Allows MAX_ATTEMPTS requests per WINDOW_SECONDS per IP.
+ * Works across serverless cold starts and multiple instances.
  */
 export async function rateLimit(c: Context, next: Next) {
-  const ip = c.req.header("x-forwarded-for")?.split(",")[0]?.trim()
-    ?? c.req.header("x-real-ip")
-    ?? "unknown";
+  const ip =
+    c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ??
+    c.req.header("x-real-ip") ??
+    "unknown";
 
-  const now = Date.now();
-  const entry = attempts.get(ip);
+  const key = `dotnify:ratelimit:${ip}`;
 
-  if (!entry || now > entry.resetAt) {
-    attempts.set(ip, { count: 1, resetAt: now + WINDOW_MS });
-    return next();
+  const count = await redis.incr(key);
+  if (count === 1) {
+    // First request in this window — set TTL
+    await redis.expire(key, WINDOW_SECONDS);
   }
 
-  entry.count++;
-  if (entry.count > MAX_ATTEMPTS) {
+  if (count > MAX_ATTEMPTS) {
     return c.json({ ok: false, error: "Too many requests, please try again later" }, 429);
   }
 
