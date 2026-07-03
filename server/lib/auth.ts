@@ -75,9 +75,13 @@ export async function getAdmin(): Promise<Admin | null> {
   return parseStored<Admin>(raw);
 }
 
-/** Persist the admin record (only used by /api/auth/setup). */
-export async function setAdmin(admin: Admin): Promise<void> {
-  await redis.set(KEYS.admin, JSON.stringify(admin));
+/**
+ * Atomically create the admin record. Returns true if created, false if
+ * an admin already existed (prevents TOCTOU race on /setup).
+ */
+export async function createAdmin(admin: Admin): Promise<boolean> {
+  const ok = await redis.set(KEYS.admin, JSON.stringify(admin), { nx: true });
+  return ok === "OK";
 }
 
 /** Extract a bearer token from the Authorization header string. */

@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { getAdmin, extractBearerToken, getSession, createSession, verifyPassword, destroySession, hashPassword, setAdmin } from "../lib/auth.js";
+import { getAdmin, extractBearerToken, getSession, createSession, verifyPassword, destroySession, hashPassword, createAdmin } from "../lib/auth.js";
 import { ok, error, unauthorized } from "../lib/response.js";
 import { rateLimit } from "../lib/rate-limit.js";
 import type { Admin } from "../lib/types.js";
@@ -92,11 +92,6 @@ auth.post("/logout", async (c) => {
  * Body: { username, password }
  */
 auth.post("/setup", rateLimit, async (c) => {
-  const existing = await getAdmin();
-  if (existing) {
-    return error(c, "Admin already initialized", 409);
-  }
-
   const body = await c.req.json<{ username?: string; password?: string }>();
   const username = body.username?.trim();
   const password = body.password ?? "";
@@ -120,7 +115,11 @@ auth.post("/setup", rateLimit, async (c) => {
     passwordHash,
     createdAt: new Date().toISOString(),
   };
-  await setAdmin(admin);
+
+  const created = await createAdmin(admin);
+  if (!created) {
+    return error(c, "Admin already initialized", 409);
+  }
 
   return ok(c, { username, createdAt: admin.createdAt }, 201);
 });
