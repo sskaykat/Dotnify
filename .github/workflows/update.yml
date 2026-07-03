@@ -1,0 +1,26 @@
+name: Update to the latest version
+on:
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: release
+
+      - name: Sync from Upstream
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+          git remote add upstream https://github.com/airtouch97/Dotnify.git 2>/dev/null || git remote set-url upstream https://github.com/airtouch97/Dotnify.git
+          git fetch upstream
+
+          git checkout release
+          git merge upstream/release -m "Update to upstream release"
+
+          git push origin release
