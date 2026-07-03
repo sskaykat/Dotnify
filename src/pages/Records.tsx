@@ -186,6 +186,12 @@ export function Records() {
   const showProxied = providerType === "cloudflare";
   const showLine = providerType === "huawei" || providerType === "dnspod";
 
+  useEffect(() => {
+    document.title = zoneName
+      ? `${zoneName} | Dotnify`
+      : `${t("title.records")} | Dotnify`;
+  }, [zoneName, t]);
+
   // DNSPod line data for display in the table
   const dpLinesPath = providerType === "dnspod" && zoneId && providerId
     ? `/api/zones/${zoneId}/lines?providerId=${providerId}&providerType=dnspod&zoneName=${encodeURIComponent(zoneName)}`

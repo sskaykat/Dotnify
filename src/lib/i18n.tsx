@@ -12,6 +12,12 @@ const translations: Record<Lang, Record<string, string>> = {
     "nav.providers": "Providers",
     "header.signedInAs": "signed in as",
     "header.signOut": "Sign out",
+    "title.home": "Dashboard",
+    "title.domains": "Domains",
+    "title.providers": "Providers",
+    "title.records": "DNS Records",
+    "title.login": "Sign in",
+    "title.setup": "Setup",
 
     // Home
     "home.title": "Dotnify",
@@ -195,6 +201,12 @@ const translations: Record<Lang, Record<string, string>> = {
     "nav.providers": "服务商",
     "header.signedInAs": "登录为",
     "header.signOut": "退出登录",
+    "title.home": "仪表盘",
+    "title.domains": "域名",
+    "title.providers": "服务商",
+    "title.records": "DNS 记录",
+    "title.login": "登录",
+    "title.setup": "初始化",
 
     // Home
     "home.title": "Dotnify",

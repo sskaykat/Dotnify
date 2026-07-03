@@ -87,12 +87,12 @@ export const router = createBrowserRouter([
     loader: rootLoader,
     element: <Layout />,
     children: [
-      { index: true, element: <IndexRedirect /> },
-      { path: "setup", element: <SetupGuard /> },
-      { path: "login", element: <LoginGuard /> },
-      { path: "providers", element: <AuthGuard><Providers /></AuthGuard> },
-      { path: "domains", element: <AuthGuard><Zones /></AuthGuard> },
-      { path: "domains/:zoneId/records", element: <AuthGuard><Records /></AuthGuard> },
+      { index: true, element: <IndexRedirect />, handle: { titleKey: "title.home" } },
+      { path: "setup", element: <SetupGuard />, handle: { titleKey: "title.setup" } },
+      { path: "login", element: <LoginGuard />, handle: { titleKey: "title.login" } },
+      { path: "providers", element: <AuthGuard><Providers /></AuthGuard>, handle: { titleKey: "title.providers" } },
+      { path: "domains", element: <AuthGuard><Zones /></AuthGuard>, handle: { titleKey: "title.domains" } },
+      { path: "domains/:zoneId/records", element: <AuthGuard><Records /></AuthGuard>, handle: { titleKey: "" } },
       // Legacy redirect
       { path: "zones", element: <Navigate to="/domains" replace /> },
       { path: "zones/:zoneId/records", element: <AuthGuard><Records /></AuthGuard> },

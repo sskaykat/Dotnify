@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, NavLink, Outlet } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, NavLink, Outlet, useMatches } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLang } from "@/lib/i18n";
 import { Button } from "./Button";
@@ -10,6 +10,13 @@ export function Layout() {
   const { username, logout, authenticated } = useAuth();
   const { t } = useLang();
   const [busy, setBusy] = useState(false);
+  const matches = useMatches();
+
+  useEffect(() => {
+    const titleKey = (matches[matches.length - 1]?.handle as Record<string, string> | undefined)?.titleKey;
+    if (titleKey === undefined || titleKey === "") return; // let the page manage its own title
+    document.title = `${t(titleKey)} | Dotnify`;
+  }, [matches, t]);
 
   const NAV = [
     { to: "/", label: t("nav.home"), end: true },
