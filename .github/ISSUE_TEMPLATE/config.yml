@@ -1,0 +1,5 @@
+blank_issue_enabled: false
+contact_links:
+  - name: Question
+    url: https://github.com/airtouch97/Dotnify/discussions
+    about: Ask a question or start a discussion
