@@ -75,3 +75,7 @@ English | [简体中文](./README.zh-CN.md)
 ## License
 
 [AGPL-v3](./LICENSE)
+
+## Acknowledgements
+
+Thanks to the [LINUX DO](https://linux.do) community for their support and feedback.

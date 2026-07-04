@@ -75,3 +75,7 @@
 ## 许可证
 
 [AGPL-v3](./LICENSE)
+
+## 致谢
+
+感谢 [LINUX DO](https://linux.do) 社区的支持与反馈。
