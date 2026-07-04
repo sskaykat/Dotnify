@@ -1,0 +1,10 @@
+services:
+  dotnify:
+    image: airtouch97/dotnify:latest
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - UPSTASH_REDIS_REST_URL=${UPSTASH_REDIS_REST_URL}
+      - UPSTASH_REDIS_REST_TOKEN=${UPSTASH_REDIS_REST_TOKEN}
+    restart: unless-stopped
