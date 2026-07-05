@@ -11,6 +11,8 @@ const scrypt = promisify(scryptCb) as (
 
 const SCRYPT_KEYLEN = 64;
 const SESSION_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 days
+/** Refresh TTL when remaining time drops below this threshold. */
+const SESSION_REFRESH_THRESHOLD = Math.floor(SESSION_TTL_SECONDS / 2); // 3.5 days
 
 /**
  * Upstash SDK auto-deserializes JSON-looking strings into objects by default,
@@ -67,6 +69,29 @@ export async function getSession(token: string): Promise<Session | null> {
 /** Delete a session token (logout). */
 export async function destroySession(token: string): Promise<void> {
   await redis.del(KEYS.session(token));
+}
+
+/**
+ * Sliding expiration: refresh the session TTL if it's getting low.
+ *
+ * This ensures that active users never get logged out as long as they
+ * use the app within the idle window. Only refreshes when the remaining
+ * TTL drops below SESSION_REFRESH_THRESHOLD to avoid a Redis write on
+ * every single request.
+ *
+ *   Full TTL:  7 days — set on login / refresh
+ *   Threshold: 3.5 days — refresh kicks in below this
+ *
+ * So a user who is active at least once every 3.5 days stays logged in
+ * indefinitely; after 3.5+ days of inactivity the session expires.
+ */
+export async function refreshSessionTTL(token: string): Promise<void> {
+  const key = KEYS.session(token);
+  const ttl = await redis.ttl(key);
+  // redis.ttl returns: -2 = key missing, -1 = no expiry, >0 = seconds left
+  if (ttl > 0 && ttl < SESSION_REFRESH_THRESHOLD) {
+    await redis.expire(key, SESSION_TTL_SECONDS);
+  }
 }
 
 /** Get the admin record, or null if not yet set up. */
