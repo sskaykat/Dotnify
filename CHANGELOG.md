@@ -1,5 +1,35 @@
 # Changelog
 
+## v0.3.0 (2026-07-09)
+
+### Features
+
+- **Alibaba Cloud DNS provider** — manage DNS records via Alibaba Cloud API ([#5](https://github.com/airtouch97/Dotnify/pull/5))
+- API rate limiting — global 60 req/min with configurable middleware
+- Zone list caching — localStorage cache with 7-day TTL and background revalidation
+
+### Bug Fixes
+
+- Fix i18n Toggle on/off labels and rename 橙云代理 to 小黄云代理
+- Remove duplicate ProviderLogo in AddDomainForm provider list
+- Treat empty string as no-path in `useFetch`
+
+### Style
+
+- Rename "DNSPod" to "Tencent Cloud" in all user-facing labels ([#4](https://github.com/airtouch97/Dotnify/pull/4))
+- Use table-fixed with percentage widths for records table columns
+- Widen TTL and Actions columns in records table
+
+### Refactor
+
+- Pass zone context via router state instead of URL query params
+- Unify ExportModal download through `apiFetch` with raw mode
+
+### Infrastructure
+
+- Add dev branch Docker image workflow
+- Add typecheck and build check workflow
+
 ## v0.2.0 (2026-07-06)
 
 ### Features
